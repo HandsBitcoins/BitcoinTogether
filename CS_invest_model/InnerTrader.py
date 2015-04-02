@@ -61,11 +61,3 @@ def calSellPrice(numStep=0,pricePeak,priceBuy,unitCurrency=100.0):
 	priceSellQuantized = priceSellUnit*unitCurrency
 	
 	return priceSellQuantized
-
-def checkIsPeak(priceQuote,pricePrev):
-	return pricePrev > priceQuote
-	
-def checkIsFloor(priceQuote,pricePrev):
-	return pricePrev < priceQuote
-
-#test_of_androidGit
