@@ -68,7 +68,7 @@ def checkIsPeak(priceQuote,pricePrev):
 def checkIsFloor(priceQuote,pricePrev):
 	return pricePrev < priceQuote
 
-	
+#test_of_androidGit
 	
 	
 	
