@@ -8,19 +8,20 @@ def calInverseDownRateByRatio(ratioDown):
 def calDigByPrices(pricePeak,priceBuy):
 	return pricePeak-priceBuy
 
-def CalDigByRatioAndPeak(ratioDown,pricePeak)
+def CalDigByRatioAndPeak(ratioDown,pricePeak):
 	return (1-ratioDown)*pricePeak
 
 def getExpectationRatio(nowDig,avgDigs,devDigs):
 	#find constant to make 1 in x is zero
-	valZero = scipy.stats.norm(0,devDigs).pdf(0)	
-  ampExpectation = 1/valZero
+	valZero = scipy.stats.norm(0,devDigs).pdf(0)
+	ampExpectation = 1.0 - valZero
     
-  #mapping   nowDig:avgDigs = x:Sigma(devDigs)
-  valMappingAvgToSigma = devDigs/AvgDigs
-  valMapped = valMappingAvgToSigma*nowDig
-  
-  return ampExpectation*scipy.stats.norm(0,devDigs).pdf(valMapped)
+	#mapping   nowDig:avgDigs = x:Sigma(devDigs)
+	valMappingAvgToSigma = float(devDigs)/float(avgDigs)
+	valMapped = float(valMappingAvgToSigma)*float(nowDig)
+	#print valMapped, ampExpectation
+
+	return ampExpectation + scipy.stats.norm(0,devDigs).pdf(valMapped)
 
 def calMaxRate(ratioDown,valExpect):
 	#in defensive strategy
@@ -52,12 +53,25 @@ def getRateToSell(numStep):
 	
 	return -1*((numStep**3)-6*(numStep**2)+5*numStep)/60+0.1
 	
-def calSellAmount(numStep=0,amountBitCoin):
+def calSellAmount(amountBitCoin,numStep=0):
 	return amountBitCoin*getRateToSell(numStep)
 
-def calSellPrice(numStep=0,pricePeak,priceBuy,unitCurrency=100.0):
+def calSellPrice(pricePeak,priceBuy,numStep=0,unitCurrency=100.0):
 	priceSellReal = (numStep+1)*0.2*calDigByPrices(pricePeak,priceBuy)+priceBuy
 	priceSellUnit = math.ceil(priceSellReal/unitCurrency)
 	priceSellQuantized = priceSellUnit*unitCurrency
 	
 	return priceSellQuantized
+
+print getExpectationRatio(1000,5000,0.05)
+print getExpectationRatio(1000,5000,0.5)
+print getExpectationRatio(1000,5000,1)
+print getExpectationRatio(1000,5000,5)
+print getExpectationRatio(4000,5000,0.05)
+print getExpectationRatio(4000,5000,0.5)
+print getExpectationRatio(4000,5000,1)
+print getExpectationRatio(4000,5000,5)
+print getExpectationRatio(10000,5000,0.05)
+print getExpectationRatio(10000,5000,0.5)
+print getExpectationRatio(10000,5000,1)
+print getExpectationRatio(10000,5000,5)
