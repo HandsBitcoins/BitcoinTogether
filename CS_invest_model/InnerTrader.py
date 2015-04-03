@@ -36,8 +36,8 @@ def calMaxRate(ratioDown,valExpect):
 def calMinRate(ratioDown,valExpect):
 	return 0.02*valExpect*calInverseDownRateByRatio(ratioDown)
    
-def checkPeeCondition(ratioDown,valExpect,valPeePercent=0.000):
-	return getMinRate(ratioDown,valExpect) > valPeePercent*(2+calMaxRate(ratioDown,valExpect))
+def checkFeeCondition(ratioDown,valExpect,valFeePercent=0.000):
+	return getMinRate(ratioDown,valExpect) > valFeePercent*(2+calMaxRate(ratioDown,valExpect))
 
 def calBuyAmount(fundRemain,valExpect):
 	return fundRemain*(valExpect**2)
