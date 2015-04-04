@@ -26,14 +26,14 @@ class chiperSimple(object):
         messageCiphered = cipher.encrypt(messagePadded)
         messageCiphered = messageCiphered + iv + salt
         
-        return messageCiphered.encode("hex")
+        return messageCiphered
         
     def decrypt(self,msg,keyLock):
         import hashlib
         
         from Crypto.Cipher import AES
     
-        msgDecoded = msg.decode("hex")
+        msgDecoded = msg
         
         posIv = len(msgDecoded)-self.SIZE_BLOCK-self.LEN_SALT
         posSalt = len(msgDecoded)-self.LEN_SALT
@@ -63,12 +63,38 @@ class korbitAPI(object):
             self.makeConfigFile()
         
     def checkExistConfigFile(self):
-        return False
+        return os.path.isfile("./korbitAPI.dat")
     
-    def makeConfigFile(self,keyAPI=-1,keySecret=-1,strID=-1,strPassword=-1):
+    def makeConfigFile(self,keyLock=-1,keyAPI=-1,keySecret=-1,strID=-1,strPassword=-1):
+        if keyAPI < 0 or keySecret < 0 or strID < 0 or strPassword < 0 or keyLock < 0:
+            return -1
+            
+        chiper = chiperSimple()
+        
+        hexToSave = chiper.encrypt(keyAPI, keyLock) + "|"
+        hexToSave += chiper.encrypt(keySecret, keyLock) + "|"        
+        hexToSave += chiper.encrypt(strID, keyLock) + "|"        
+        hexToSave += chiper.encrypt(strPassword, keyLock)        
+        
+        streamFile = open("./korbitAPI.dat",'w')
+        streamFile.write(hexToSave)
+        streamFile.close()
         
         return 0
-        
-        
     
+    def readConfigFile(self,keyLock=-1):
+        streamFile = open("./korbitAPI.dat",'r')
+        hexToDecrypt = streamFile.read()        
+        streamFile.close()
+        
+        hexToDecrypt = hexToDecrypt.split('|')
+        
+        cipher = chiperSimple()
+        dataToToken = []
+        for i in range(4):
+            print hexToDecrypt[i], len(hexToDecrypt[i])
+            dataToToken.append(cipher.decrypt(hexToDecrypt[i], keyLock))
+        
+        return dataToToken
+     
         
