@@ -78,7 +78,7 @@ class KorbitAPI(object):
         if len(dataToToken[0]) == 0:
             return ERROR_KORBIT_API_WRONG_KEY_LOCK
         
-        connection = httplib.HTTPSConnection("api.korbit.co.kr")
+        connection = httplib.HTTPSConnection("api.korbit-test.com")
         parameter = self.getParameter(dataToToken)        
         header = {"Content-type": "application/x-www-form-urlencoded",
                "Accept": "text/plain"}
@@ -138,6 +138,8 @@ class KorbitAPI(object):
                  'grant_type': 'password'} 
         
         return urllib.urlencode(params)
+    
+        
 
 # kapi = KorbitAPI()
 # kapi.makeConfigFile("A", "ASD", "keySecret", "strID", "strPassword")

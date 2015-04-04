@@ -64,7 +64,8 @@ api = KorbitModule.KorbitAPI()
 print "Welcome to Korbit Trader!!\n"
 if not api.checkExistConfigFile():
     ui.genConfigFile()
-print ui.connect()
+response = ui.connect()
+print response.read()
 
      
         
