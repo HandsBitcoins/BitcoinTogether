@@ -70,17 +70,16 @@ class KorbitAPI(object):
         if keyLock < 0:
             return ERROR_KORBIT_API_NO_KEY_LOCK
         
-        if self.checkExistConfigFile():
+        if not self.checkExistConfigFile():
             return ERROR_KORBIT_API_NO_CONFIG_FILE
                 
         #dataToToken = [keyAPI, keySecret, strID, strPassword]
-        dataToToken = self.readConfigFile(keyLock)
-        
+        dataToToken = self.readConfigFile(keyLock)        
         if len(dataToToken[0]) == 0:
             return ERROR_KORBIT_API_WRONG_KEY_LOCK
         
-        connection = httplib.HTTPSConnection("https://api.korbit.co.kr/v1/oauth2/access_token")
-        parameter = getParameter(dataToToken)
+        connection = httplib.HTTPSConnection("api.korbit.co.kr/v1/oauth2/access_token")
+        parameter = self.getParameter(dataToToken)
         header = {"Content-type": "application/x-www-form-urlencoded",
                "Accept": "text/plain"}
         connection.request("POST", "/v1/oauth2/access_token", parameter, header)
@@ -89,6 +88,7 @@ class KorbitAPI(object):
         return response
                 
     def checkExistConfigFile(self):
+        import os
         return os.path.isfile("./korbitAPI.dat")
     
     def makeConfigFile(self,keyLock=-1,keyAPI=-1,keySecret=-1,strID=-1,strPassword=-1):
@@ -142,10 +142,10 @@ class KorbitAPI(object):
             
         return paramPost
 
-kapi = KorbitAPI()
-kapi.makeConfigFile("A", "ASD", "keySecret", "strID", "strPassword")
-datas = kapi.readConfigFile("A")
-print "A", datas
-datas = kapi.readConfigFile("B")
-print "B", datas
-print len(datas[0])
+# kapi = KorbitAPI()
+# kapi.makeConfigFile("A", "ASD", "keySecret", "strID", "strPassword")
+# datas = kapi.readConfigFile("A")
+# print "A", datas
+# datas = kapi.readConfigFile("B")
+# print "B", datas
+# print len(datas[0])
