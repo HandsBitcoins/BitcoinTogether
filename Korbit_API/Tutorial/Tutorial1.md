@@ -27,7 +27,7 @@
 >PW : veryhardpassword
 >로 가정하였다.
 >
-    conn = httplib.HTTPSConnection("api.korbit.co.kr/v1/oauth2/access_token")
+    conn = httplib.HTTPSConnection("api.korbit.co.kr")
 	par = "client_id=" + "fG4rUqTg" + "&client_secret=" + "9m4GImYJHHxBHiEvQu7sY1pPZn9" + "&username=" + "ABC@korea.ac.kr" + "&password=" + "veryhardpassword" + "&grant_type=password"
 	hdr = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
 	conn.request("POST","/v1/oauth2/access_token",par,hdr)

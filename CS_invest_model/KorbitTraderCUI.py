@@ -23,6 +23,8 @@ class KorbitTraderCUI(object):
                 print "Connection established."
                 notConnected = False
                 
+        return result
+                
     def getInput(self,msgToDisplay="Please enter anything. If you can see this message, please say 'Fuck' that lazy developers: "):
         valInput = raw_input(msgToDisplay)
         return valInput
@@ -62,7 +64,7 @@ api = KorbitModule.KorbitAPI()
 print "Welcome to Korbit Trader!!\n"
 if not api.checkExistConfigFile():
     ui.genConfigFile()
-ui.connect()
+print ui.connect()
 
      
         

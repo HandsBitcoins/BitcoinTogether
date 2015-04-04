@@ -78,8 +78,8 @@ class KorbitAPI(object):
         if len(dataToToken[0]) == 0:
             return ERROR_KORBIT_API_WRONG_KEY_LOCK
         
-        connection = httplib.HTTPSConnection("api.korbit.co.kr/v1/oauth2/access_token")
-        parameter = self.getParameter(dataToToken)
+        connection = httplib.HTTPSConnection("api.korbit.co.kr")
+        parameter = self.getParameter(dataToToken)        
         header = {"Content-type": "application/x-www-form-urlencoded",
                "Accept": "text/plain"}
         connection.request("POST", "/v1/oauth2/access_token", parameter, header)
@@ -126,21 +126,18 @@ class KorbitAPI(object):
         return dataToToken
      
     def getParameter(self,dataToToken=-1):
+        import urllib       
+        
         if dataToToken < 0 or len(dataToToken) != 4:
             return ERROR_KORBIT_API_NOT_ENOUGH_DATA_TO_MAKE_PARAMS
         
-        param = []        
-        param.append("client_id="      + dataToToken[0])
-        param.append("&client_secret=" + dataToToken[1])
-        param.append("&username="      + dataToToken[2])        
-        param.append("&password="      + dataToToken[3])
-        param.append("&grant_type=password")
-
-        paramPost = ""
-        for eachParam in param:
-            paramPost += eachParam
-            
-        return paramPost
+        params = {'client_id': dataToToken[0],
+                 'client_secret': dataToToken[1],
+                 'username': dataToToken[2],
+                 'password': dataToToken[3],
+                 'grant_type': 'password'} 
+        
+        return urllib.urlencode(params)
 
 # kapi = KorbitAPI()
 # kapi.makeConfigFile("A", "ASD", "keySecret", "strID", "strPassword")
