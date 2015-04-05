@@ -62,10 +62,11 @@ ERROR_KORBIT_API_NOT_ENOUGH_DATA_TO_MAKE_PARAMS = 69
 
 class KorbitAPI(object):
     def __init__(self):
-        pass
+        self.tokenAccess = {}
         
     def connect(self,keyLock=-1):
         import httplib
+        import json
         
         if keyLock < 0:
             return ERROR_KORBIT_API_NO_KEY_LOCK
@@ -79,14 +80,14 @@ class KorbitAPI(object):
             return ERROR_KORBIT_API_WRONG_KEY_LOCK
         
         connection = httplib.HTTPSConnection("api.korbit-test.com")
-        parameter = self.getParameter(dataToToken)        
+        parameter = self.getConnectionParameter(dataToToken)        
         header = {"Content-type": "application/x-www-form-urlencoded",
                "Accept": "text/plain"}
         connection.request("POST", "/v1/oauth2/access_token", parameter, header)
-        response = connection.getresponse()
+        self.tokenAccess = json.loads(connection.getresponse().read())
         
-        return response
-                
+        return self.tokenAccess
+        
     def checkExistConfigFile(self):
         import os
         return os.path.isfile("./korbitAPI.dat")
@@ -124,8 +125,8 @@ class KorbitAPI(object):
             dataToToken.append(cipher.decrypt(hexToDecrypt[i], keyLock))
         
         return dataToToken
-     
-    def getParameter(self,dataToToken=-1):
+         
+    def getConnectionParameter(self,dataToToken=-1):
         import urllib       
         
         if dataToToken < 0 or len(dataToToken) != 4:
@@ -139,7 +140,12 @@ class KorbitAPI(object):
         
         return urllib.urlencode(params)
     
+    def getPrices():
+        #GET https://api.korbit.co.kr/v1/ticker/detailed        
+        import urllib2
+        return urllib2.urlopen("https://api.korbit.co.kr/v1/ticker/detailed").read()
         
+     
 
 # kapi = KorbitAPI()
 # kapi.makeConfigFile("A", "ASD", "keySecret", "strID", "strPassword")
