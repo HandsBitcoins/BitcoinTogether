@@ -156,7 +156,24 @@ class KorbitAPI(object):
         
         return infoPrices
         
-     
+    def buy(self,amount,price):
+        pass
+    
+    def sell(self,amount,price):
+        pass
+        
+    def checkEnoughKRW(self,amount):
+        pass
+        
+    def checkEnoughBTC(self,amount):
+        pass
+    
+    def lookupOrders(self):
+        pass
+        
+    def cancelOrder(self,id):
+        pass
+        
 
 # kapi = KorbitAPI()
 # kapi.makeConfigFile("A", "ASD", "keySecret", "strID", "strPassword")
