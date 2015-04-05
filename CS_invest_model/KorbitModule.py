@@ -1,3 +1,4 @@
+from httplib import responses
 class ChiperSimple(object):
     def __init__(self):
         self.LEN_SALT = 32
@@ -60,13 +61,14 @@ ERROR_KORBIT_API_WRONG_KEY_LOCK = 67
 ERROR_KORBIT_API_NOT_ENOUGH_PRAMS_TO_MAKE_CONFIG_FILE = 68
 ERROR_KORBIT_API_NOT_ENOUGH_DATA_TO_MAKE_PARAMS = 69
 
+import json
+
 class KorbitAPI(object):
     def __init__(self):
         self.tokenAccess = {}
         
     def connect(self,keyLock=-1):
-        import httplib
-        import json
+        import httplib        
         
         if keyLock < 0:
             return ERROR_KORBIT_API_NO_KEY_LOCK
@@ -84,7 +86,9 @@ class KorbitAPI(object):
         header = {"Content-type": "application/x-www-form-urlencoded",
                "Accept": "text/plain"}
         connection.request("POST", "/v1/oauth2/access_token", parameter, header)
-        self.tokenAccess = json.loads(connection.getresponse().read())
+        response = connection.getresponse()
+        self.tokenAccess = response.read()
+        self.tokenAccess = json.loads(self.tokenAccess)
         
         return self.tokenAccess
         
@@ -140,10 +144,17 @@ class KorbitAPI(object):
         
         return urllib.urlencode(params)
     
-    def getPrices():
-        #GET https://api.korbit.co.kr/v1/ticker/detailed        
-        import urllib2
-        return urllib2.urlopen("https://api.korbit.co.kr/v1/ticker/detailed").read()
+    def getPrices(self):        
+        import httplib
+  
+        #GET https://api.korbit.co.kr/v1/ticker/detailed                
+        connection = httplib.HTTPSConnection("api.korbit-test.com")
+        connection.request("GET","/v1/ticker/detailed")
+        response = connection.getresponse()
+        jsonResponse = response.read()
+        infoPrices = json.loads(jsonResponse)
+        
+        return infoPrices
         
      
 

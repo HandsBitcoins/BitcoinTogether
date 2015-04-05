@@ -13,12 +13,12 @@ class KorbitTraderCUI(object):
             result = self.korbitAPI.connect(keyLock)
             
             if result == KorbitModule.ERROR_KORBIT_API_NO_KEY_LOCK: #no keyLock
-                keyLock = raw_input("Password is Needed. Please enter the password: ")
+                keyLock = getpass.getpass("Password is Needed. Please enter the password: ")
             elif result == KorbitModule.ERROR_KORBIT_API_NO_CONFIG_FILE: #no configFile
                 print "Can not find configuration file \"korbitAPI.dat\"."
                 self.genConfigFile()
             elif result == KorbitModule.ERROR_KORBIT_API_WRONG_KEY_LOCK:
-                keyLock = raw_input("Password is Wrong. Please enter the RIGHT password: ")                
+                keyLock = getpass.getpass("Password is Wrong. Please enter the RIGHT password: ")                
             else:
                 print "Connection established."
                 notConnected = False
@@ -65,7 +65,9 @@ print "Welcome to Korbit Trader!!\n"
 if not api.checkExistConfigFile():
     ui.genConfigFile()
 response = ui.connect()
-print response.read()
+print response
+print api.getPrices()
+
 
      
         
