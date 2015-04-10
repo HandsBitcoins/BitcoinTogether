@@ -1,60 +1,3 @@
-from httplib import responses
-class ChiperSimple(object):
-    def __init__(self):
-        self.LEN_SALT = 32
-        self.NUM_ROUND = 1337
-        self.SIZE_BLOCK = 16
-        self.SIZE_KEY = 32
-    
-    def encrypt(self,message,keyLock):
-        import hashlib
-        import os
-        
-        from Crypto.Cipher import AES
-                
-        salt = os.urandom(self.LEN_SALT)
-        iv = os.urandom(self.SIZE_BLOCK)
-        
-        lenPadding = 16 - (len(message)%16)
-        messagePadded = message + chr(lenPadding)*lenPadding
-        
-        keyDerived = keyLock
-        for i in range(0,self.NUM_ROUND):
-            keyDerived = hashlib.sha256(keyDerived+salt).digest()
-        keyDerived = keyDerived[:self.SIZE_KEY]
-        
-        cipher = AES.new(keyDerived, AES.MODE_CBC, iv)
-        messageCiphered = cipher.encrypt(messagePadded)
-        messageCiphered = messageCiphered + iv + salt
-        
-        return messageCiphered.encode("hex")
-        
-    def decrypt(self,msg,keyLock):
-        import hashlib
-        
-        from Crypto.Cipher import AES
-    
-        msgDecoded = msg.decode("hex")
-        
-        posIv = len(msgDecoded)-self.SIZE_BLOCK-self.LEN_SALT
-        posSalt = len(msgDecoded)-self.LEN_SALT
-        
-        data = msgDecoded[:posIv]
-        iv = msgDecoded[posIv:posSalt]
-        salt = msgDecoded[posSalt:]
-                
-        keyDerive = keyLock
-        for i in range(0,self.NUM_ROUND):
-            keyDerive = hashlib.sha256(keyDerive+salt).digest()
-        keyDerive = keyDerive[:self.SIZE_KEY]
-        
-        cipher = AES.new(keyDerive, AES.MODE_CBC, iv)
-        msgPadded = cipher.decrypt(data)
-        lenPadding = ord(msgPadded[-1])
-        msgDecrypted = msgPadded[:-lenPadding]
-        
-        return msgDecrypted
-
 ERROR_KORBIT_API_NO_KEY_LOCK = 65
 ERROR_KORBIT_API_NO_CONFIG_FILE = 66
 ERROR_KORBIT_API_WRONG_KEY_LOCK = 67
@@ -62,6 +5,8 @@ ERROR_KORBIT_API_NOT_ENOUGH_PRAMS_TO_MAKE_CONFIG_FILE = 68
 ERROR_KORBIT_API_NOT_ENOUGH_DATA_TO_MAKE_PARAMS = 69
 
 import json
+
+import ChiperSimple
 
 class KorbitAPI(object):
     def __init__(self):

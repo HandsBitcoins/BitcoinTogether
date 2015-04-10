@@ -1,125 +1,187 @@
 import httplib
-import urllib       
+import urllib
 import json
 import time
 import math
 import random
 
-import tweepy
-
+import ChiperSimple
 # btcchina
 # okcoin
 # huobi
 # bitfinex
 # lakebtc
 
-def getPriceBtcChina():
-    # https://data.btcchina.com/data/ticker?market=all
-    params = {'market': 'all'}
-    parameter = urllib.urlencode(params)
-                 
-    connection = httplib.HTTPSConnection("data.btcchina.com")
-    connection.request("GET","/data/ticker",parameter)
-    response = connection.getresponse()
-    jsonResponse = response.read()
-    infoPrices = json.loads(jsonResponse)
+
+class TrakerBitcoinBollinger(object):
+    def __init__(self):
+        pass
     
-    return infoPrices
-
-def getPriceOkcoin():
-    # https://www.okcoin.com/api/ticker.do?ok=1
-    connection = httplib.HTTPSConnection("www.okcoin.com")
-    connection.request("GET","/api/ticker.do?ok=1")#, parameter)
-    response = connection.getresponse()
-    jsonResponse = response.read()
-    infoPrices = json.loads(jsonResponse)
-
-    return infoPrices
-
-def getPriceHuobi():
-    # http://api.huobi.com/staticmarket/ticker_btc_json.js 
-    connection = httplib.HTTPSConnection("api.huobi.com")
-    connection.request("GET","/staticmarket/ticker_btc_json.js")
-    response = connection.getresponse()
-    jsonResponse = response.read()
-    infoPrices = json.loads(jsonResponse)
-    
-    return infoPrices
-
-def getPriceBitfinex():
-    # https://api.bitfinex.com/v1/pubticker/:symbol
-    connection = httplib.HTTPSConnection("api.bitfinex.com")
-    connection.request("GET","/v1/pubticker/btcusd")
-    response = connection.getresponse()
-    jsonResponse = response.read()
-    infoPrices = json.loads(jsonResponse)
-    
-    return infoPrices
-
-def getPriceLakeBTC():
-    # https://www.LakeBTC.com/api_v1/ticker
-    connection = httplib.HTTPSConnection("www.LakeBTC.com")
-    connection.request("GET","/api_v1/ticker")
-    response = connection.getresponse()
-    jsonResponse = response.read()
-    infoPrices = json.loads(jsonResponse)
-
-    return infoPrices
-
-def testTimeCaculation():
-    fileOpened = open("./72000test.csv",'r')
-    newList = fileOpened.readlines()
-    fileOpened.close()
-    
-    dataList = []
-    for eachLine in newList:
-        dataList.append(float(eachLine))
-     
-    import numpy
-    timeStamps = []    
-    timeStamps.append(time.time())
-    print numpy.std(dataList)
-    timeStamps.append(time.time())
-    print numpy.mean(dataList)
-    timeStamps.append(time.time())
-     
-    print len(dataList)
-    for i in range(len(timeStamps)-1):
-        print timeStamps[i+1] - timeStamps[i]
-    print timeStamps[-1] - timeStamps[0]
-    
-def testGetPrice():
-    dataPrice = []
-    
-    timeStamps = []    
-    timeStamps.append(time.time())
-    dataPrice.append(getPriceBtcChina())
-    timeStamps.append(time.time())
-    dataPrice.append(getPriceOkcoin())
-    timeStamps.append(time.time())
-    dataPrice.append(getPriceHuobi())
-    timeStamps.append(time.time())
-    dataPrice.append(getPriceBitfinex())
-    timeStamps.append(time.time())
-    dataPrice.append(getPriceLakeBTC())
-    timeStamps.append(time.time())
-     
-    for i in range(len(timeStamps)-1):
-        print timeStamps[i+1] - timeStamps[i]
-    print timeStamps[-1] - timeStamps[0]
+    def initTraker(self):
+        # 2sec interval, 5days
+        self.numDataPrice = 5*24*60*60 
         
-    print dataPrice[0]['ticker']['sell']
-    print dataPrice[0]['ticker']['buy']
-    print dataPrice[1]['ticker']['sell']
-    print dataPrice[1]['ticker']['buy']
-    print dataPrice[2]['ticker']['sell']
-    print dataPrice[2]['ticker']['buy']
-    print dataPrice[3]['bid']
-    print dataPrice[3]['ask']
-    print dataPrice[4]['USD']['bid']
-    print dataPrice[4]['USD']['ask']
+        self.counter = 0
+        self.bids = [0.0 for _ in range(self.numDataPrice)]
+        self.asks = [0.0 for _ in range(self.numDataPrice)]
+        
+        self.menuMarket = {0: self.getPriceBtcChina, 
+                           1: self.getPriceOkcoin, 
+                           2: self.getPriceHuobi, 
+                           3: self.getPriceBitfinex, 
+                           4: self.getPriceLakeBTC}
+        
+        self.menuTrading = {0: self.bids,
+                            1: self.asks}
+        
+        self.menuStrTrading = {0: "Bid",
+                               1: "Ask"}
+            
+        self.timeBeacon = 1.0
+            
+    def activateTraker(self,market=0):
+        import msvcrt
+        
+        while True:
+            dataPrice = self.menuMarket[market]()
+            timeBeforeCheck = time.time()
+            
+            numStdDevi = []
+            numMean = []
+            
+            self.counter += 1
+            if self.counter > self.numDataPrice:
+                self.counter = self.numDataPrice
+            else:
+                print "Step Counter:", str(self.counter)
+                print "Data Percent:", str(float(self.counter)/float(self.numDataPrice)*100.0), "%"
+                print
+                
+            for i in range(2):
+                self.menuTrading[i].insert(0,float(dataPrice[i]))
+                self.menuTrading[i].pop()                            
+                numStdDevi.append(self.getStandardDeviation(i))
+                numMean.append(self.getMeanMoving(i))
 
+            for i in range(2):
+                print self.menuStrTrading[i], "price |   Mean  |    Std    |   Upper   |  Lower"
+                upperBound = numMean[i]+2*numStdDevi[i]
+                lowerBound = numMean[i]-2*numStdDevi[i]
+                print ' {0:4.2f}    {1:4.2f}    {2:-0.5f}     {3:4.2f}    {4:4.2f}'.format(float(dataPrice[i]), numMean[i], numStdDevi[i], upperBound, lowerBound)
+                
+            timeSleep = self.timeBeacon - (time.time() - timeBeforeCheck)
+            
+            if timeSleep < 0.0:
+                timeSleep = 0.0
+            
+            print 
+            print "Process Time: " + str(self.timeBeacon-timeSleep)
+            print "  Sleep Time: " + str(timeSleep)
+            print 
+            
+            time.sleep(timeSleep)
+
+    def getStandardDeviation(self,menu=0):
+        import numpy
+        arrData = self.menuTrading[menu]
+        
+        if self.counter > len(arrData):
+            return numpy.std(arrData)
+        else:
+            return numpy.std(arrData[0:self.counter])        
+
+    def getMeanMoving(self,menu=0):
+        import numpy
+        arrData = self.menuTrading[menu]
+        
+        if self.counter > len(arrData):
+            return numpy.mean(arrData)
+        else:
+            return numpy.mean(arrData[0:self.counter])
+        
+    def getPriceBtcChina(self):
+        # https://data.btcchina.com/data/ticker?market=all
+        params = {'market': 'all'}
+        parameter = urllib.urlencode(params)
+                     
+        connection = httplib.HTTPSConnection("data.btcchina.com")
+        connection.request("GET","/data/ticker",parameter)
+        response = connection.getresponse()
+        jsonResponse = response.read()
+        infoPrices = json.loads(jsonResponse)
+        
+        priceBid = infoPrices['ticker']['buy']
+        priceAsk = infoPrices['ticker']['sell']
+        
+        return [priceBid,priceAsk]
+    
+    def getPriceOkcoin(self):
+        # https://www.okcoin.com/api/ticker.do?ok=1
+        connection = httplib.HTTPSConnection("www.okcoin.com")
+        connection.request("GET","/api/ticker.do?ok=1")#, parameter)
+        response = connection.getresponse()
+        jsonResponse = response.read()
+        infoPrices = json.loads(jsonResponse)
+    
+        priceBid = infoPrices['ticker']['buy']
+        priceAsk = infoPrices['ticker']['sell']
+        
+        return [priceBid,priceAsk]
+    
+    def getPriceHuobi(self):
+        # http://api.huobi.com/staticmarket/ticker_btc_json.js 
+        connection = httplib.HTTPSConnection("api.huobi.com")
+        connection.request("GET","/staticmarket/ticker_btc_json.js")
+        response = connection.getresponse()
+        jsonResponse = response.read()
+        infoPrices = json.loads(jsonResponse)
+        
+        priceBid = infoPrices['ticker']['buy']
+        priceAsk = infoPrices['ticker']['sell']
+        
+        return [priceBid,priceAsk]
+    
+    def getPriceBitfinex(self):
+        # https://api.bitfinex.com/v1/pubticker/:symbol
+        connection = httplib.HTTPSConnection("api.bitfinex.com")
+        connection.request("GET","/v1/pubticker/btcusd")
+        response = connection.getresponse()
+        jsonResponse = response.read()
+        infoPrices = json.loads(jsonResponse)
+        
+        priceBid = infoPrices['bid']
+        priceAsk = infoPrices['ask']
+        
+        return [priceBid,priceAsk]
+
+        print dataPrice[4]['USD']['bid']
+        print dataPrice[4]['USD']['ask']
+    
+    def getPriceLakeBTC(self):
+        # https://www.LakeBTC.com/api_v1/ticker
+        connection = httplib.HTTPSConnection("www.LakeBTC.com")
+        connection.request("GET","/api_v1/ticker")
+        response = connection.getresponse()
+        jsonResponse = response.read()
+        infoPrices = json.loads(jsonResponse)
+    
+        priceBid = infoPrices['USD']['bid']
+        priceAsk = infoPrices['USD']['ask']
+        
+        return [priceBid,priceAsk]
+
+
+traker = TrakerBitcoinBollinger()
+traker.initTraker()
+traker.activateTraker(0)
+
+
+def isExistTwitterConfigFile():
+    import os
+    return os.path.isfile("./TwitterAPI.dat")
+    
 def testTweepy():
+    import tweepy
     auth = tweepy.OAuthHandler("","")
     auth.set_access_token("", "")
     
@@ -127,26 +189,9 @@ def testTweepy():
     
     api.send_direct_message(user = "lesenic", text = "TEST")
 
-def testEmail():
-    import smtplib
-    import email
-    
-    msg = email.mime.Text.MIMEText("This is test message")
 
-    addrEmail = "rectifying@gmail.com"
-
-    msg['Subject'] = "Bitcoin alter message test"
-    msg['From'] = addrEmail
-    msg['To'] = addrEmail
-    
-    s = smtplib.SMTP('smtp.gmail.com:587')
-    s.ehlo()
-    s.starttls()
-    s.login("rectifying@gmail.com", "")
-    s.sendmail(addrEmail, [addrEmail], msg.as_string())
-    s.close()
 
 # testGetPrice()
 # testTweepy()
-testEmail()
+# testEmail()
     
