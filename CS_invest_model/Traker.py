@@ -18,7 +18,7 @@ class TrakerBitcoinBollinger(object):
         pass
     
     def initTraker(self):
-        # 2sec interval, 5days
+        # 1sec interval, 5days
         self.numDataPrice = 5*24*60*60 
         
         self.counter = 0
@@ -38,9 +38,26 @@ class TrakerBitcoinBollinger(object):
                                1: "Ask"}
             
         self.timeBeacon = 1.0
+        self.timeMailBeacon = 600/int(self.timeBeacon)
+        
+        self.dictTendency = {'upper': 0,
+                             'normal': 1,
+                             'lower': 2}
+        self.tendency = self.dictTendency['normal']
+        
+        self.counterMail = 0
+        
+    def setMailServer(self):
+        import EmailSMTPAlter
+        
+        self.mailServer = EmailSMTPAlter.SMTPEmailAlter()
+        self.mailServer.initEmail()
+                
             
     def activateTraker(self,market=0):
         import msvcrt
+        
+        self.setMailServer()
         
         while True:
             dataPrice = self.menuMarket[market]()
@@ -69,6 +86,8 @@ class TrakerBitcoinBollinger(object):
                 lowerBound = numMean[i]-2*numStdDevi[i]
                 print ' {0:4.2f}    {1:4.2f}    {2:-0.5f}     {3:4.2f}    {4:4.2f}'.format(float(dataPrice[i]), numMean[i], numStdDevi[i], upperBound, lowerBound)
                 
+            self.checkOutOfBox(dataPrice[1],upperBound,lowerBound)
+                
             timeSleep = self.timeBeacon - (time.time() - timeBeforeCheck)
             
             if timeSleep < 0.0:
@@ -80,6 +99,35 @@ class TrakerBitcoinBollinger(object):
             print 
             
             time.sleep(timeSleep)
+
+    def checkOutOfBox(self,price,upper,lower):
+        #5 hours data
+        if self.counter > 21600/int(self.timeBeacon):
+            alterState = True
+            subject = ""
+            content = "Price: " + str(price)
+            
+            if price > upper:
+                subject = "^^^ Bitcoin price is over upper bound ^^^"                
+                self.tendency = self.dictTendency['upper']                
+            elif lower > price:
+                subject = "VVV Bitcoin price is under lower bound VVV"                                
+                self.tendency = self.dictTendency['lower']
+            else:
+                alterState = False
+                self.tendency = self.dictTendency['normal']
+                
+            if self.counterMail == 0 and alterState:
+                self.counterMail = self.timeMailBeacon
+                self.mailServer.sendEmail(subject,content)
+                
+            if not alterState:
+                self.counterMail = 0
+            else:
+                self.counterMail -= 1
+                 
+            return alterState        
+        return False
 
     def getStandardDeviation(self,menu=0):
         import numpy
