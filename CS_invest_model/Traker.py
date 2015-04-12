@@ -86,7 +86,7 @@ class TrakerBitcoinBollinger(object):
                 lowerBound = numMean[i]-2*numStdDevi[i]
                 print ' {0:4.2f}    {1:4.2f}    {2:-0.5f}     {3:4.2f}    {4:4.2f}'.format(float(dataPrice[i]), numMean[i], numStdDevi[i], upperBound, lowerBound)
                 
-            self.checkOutOfBox(dataPrice[1],upperBound,lowerBound)
+            self.checkOutOfBox(float(dataPrice[1]),upperBound,lowerBound)
                 
             timeSleep = self.timeBeacon - (time.time() - timeBeforeCheck)
             
