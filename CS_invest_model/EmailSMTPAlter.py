@@ -22,9 +22,7 @@ class SMTPEmailAlter(object):
     def __init__(self):
         pass
     
-    def initEmail(self):
-        self.server = smtplib.SMTP('smtp.gmail.com:587')
-                
+    def initEmail(self):                
         self.fileName = "./SMTPEmail.dat"
         self.fileNameReciver = "./Maillist.txt"         
         
@@ -41,11 +39,12 @@ class SMTPEmailAlter(object):
         msg['From'] = self.sender
         msg['To'] = ", ".join(receiver)
         
-        self.server.ehlo()
-        self.server.starttls()
-        self.server.login(self.sender, self.password)
-        self.server.sendmail(addrEmail, receiver, msg.as_string())
-        self.server.close()
+        server = smtplib.SMTP('smtp.gmail.com:587')
+        server.ehlo()
+        server.starttls()
+        server.login(self.sender, self.password)
+        server.sendmail(self.sender, receiver, msg.as_string())
+        server.close()
     
     def getReceiver(self):
         streamFile = open(self.fileNameReciver,'r')

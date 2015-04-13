@@ -51,13 +51,13 @@ class TrakerBitcoinBollinger(object):
         import EmailSMTPAlter
         
         self.mailServer = EmailSMTPAlter.SMTPEmailAlter()
-        self.mailServer.initEmail()
-                
+        self.mailServer.initEmail()                
             
     def activateTraker(self,market=0):
         import msvcrt
         
         self.setMailServer()
+        self.mailServer.sendEmail("Tracker start.","Debug msg")
         
         while True:
             dataPrice = self.menuMarket[market]()
@@ -117,16 +117,14 @@ class TrakerBitcoinBollinger(object):
                 alterState = False
                 self.tendency = self.dictTendency['normal']
                 
+            if self.counterMail > 0:
+                self.counterMail -= 1                
+                
             if self.counterMail == 0 and alterState:
                 self.counterMail = self.timeMailBeacon
                 self.mailServer.sendEmail(subject,content)
-                
-            if not alterState:
-                self.counterMail = 0
-            else:
-                self.counterMail -= 1
-                 
-            return alterState        
+                             
+            return alterState
         return False
 
     def getStandardDeviation(self,menu=0):
