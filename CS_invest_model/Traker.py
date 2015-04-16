@@ -19,7 +19,7 @@ class TrakerBitcoinBollinger(object):
     
     def initTraker(self):
         # 1sec interval, 5days
-        self.numDataPrice = 5*24*60*60 
+        self.numDataPrice = 24*60*60 
         
         self.counter = 0
         self.bids = [0.0 for _ in range(self.numDataPrice)]
@@ -76,7 +76,7 @@ class TrakerBitcoinBollinger(object):
                 
             for i in range(2):
                 self.menuTrading[i].insert(0,float(dataPrice[i]))
-                self.menuTrading[i].pop()                            
+                self.menuTrading[i].pop()
                 numStdDevi.append(self.getStandardDeviation(i))
                 numMean.append(self.getMeanMoving(i))
 
@@ -102,30 +102,30 @@ class TrakerBitcoinBollinger(object):
 
     def checkOutOfBox(self,price,upper,lower):
         #5 hours data
-        if self.counter > 21600/int(self.timeBeacon):
-            alterState = True
-            subject = ""
-            content = "Price: " + str(price)
+
+        alterState = True
+        subject = ""
+        content = "Price: " + str(price)
+        
+        if price > upper:
+            subject = "^^^ Bitcoin price is over upper bound ^^^"                
+            self.tendency = self.dictTendency['upper']                
+        elif lower > price:
+            subject = "VVV Bitcoin price is under lower bound VVV"                                
+            self.tendency = self.dictTendency['lower']
+        else:
+            alterState = False
+            self.tendency = self.dictTendency['normal']
             
-            if price > upper:
-                subject = "^^^ Bitcoin price is over upper bound ^^^"                
-                self.tendency = self.dictTendency['upper']                
-            elif lower > price:
-                subject = "VVV Bitcoin price is under lower bound VVV"                                
-                self.tendency = self.dictTendency['lower']
-            else:
-                alterState = False
-                self.tendency = self.dictTendency['normal']
-                
-            if self.counterMail > 0:
-                self.counterMail -= 1                
-                
-            if self.counterMail == 0 and alterState:
-                self.counterMail = self.timeMailBeacon
-                self.mailServer.sendEmail(subject,content)
-                             
-            return alterState
-        return False
+        if self.counterMail > 0:
+            self.counterMail -= 1                
+            
+        if self.counterMail == 0 and alterState:
+            self.counterMail = self.timeMailBeacon
+            self.mailServer.sendEmail(subject,content)
+                         
+        return alterState
+
 
     def getStandardDeviation(self,menu=0):
         import numpy
