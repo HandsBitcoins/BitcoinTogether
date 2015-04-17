@@ -3,62 +3,39 @@ import sqlite3
 class closimStatistician(object):
 	def __init__(self):
 		pass
-	
+
 	def init(self):
 		self.isBuy = False
 		self.nowDown = 0.0
 		self.avgDown = 0.0
 		self.stdDown = 0.0
-
+		    
 		self.isDesending = False
 		self.streamData = []
-		self.nowDown = 0.0
-		self.nowUp = 0.0
 		
-		self.nameDB = "RAF.db"
-		#self.connectDataBase()
-	        
+		self.connectDataBase()
+                
 	def connectDataBase(self):
-		self.connDB = sqlite3.connect(self.nameDB)
+		self.connDB = sqlite3.connect("RAF.db")
 		self.cursor = self.connDB.cursor()
-	
+	    
 	def proceedStep(self,priceAsk):
 		self.streamData.append(priceAsk)
 	
-		nowUp = 0.0
-		
-		if len(self.streamData) < 2:
-			return [0.0, 0.0]
-	
-		if self.isDesending:
-			if self.streamData[-1] > self.streamData[-2]:
+		if isDesending:
+			if self.streamData[-1] > self.streamData[-2] :
 				self.isBuy = True
-				self.isDesending = False
 				self.nowDown = self.streamData[0] - self.streamData[-2]
-# 				print "DESEN", self.streamData
-				self.streamData = self.streamData[-2:]
-				
-		else:			
-			if self.streamData[-1] < self.streamData[-2]:
-				self.isDesending = True				
-				nowUp = self.streamData[-2] - self.streamData[0]
-# 				print "ASEN ", self.streamData
-				self.streamData = self.streamData[-2:]
-
-		dataSet = [self.nowDown, nowUp]
-		#self.insertRiseFall(dataSet)
-
-		return dataSet
-				
-	def insertRiseFall(self,dataSet):
-		self.connectDataBase()
-			    
+	        
 	def getStdDown(self):
-		pass
+	    pass
+	
+	
 	
 	def getAvgDown(self):
-		pass
+	    pass
 	   
+<<<<<<< HEAD
 	def getPriceStreamFromCSV(self,nameFile):
 		fileOpened = open(nameFile)
 		listRawAll = fileOpened.readlines()
@@ -74,16 +51,23 @@ class closimStatistician(object):
 		
 	def testStreamProcessing(self,nameFile):
 		
-		open("./graph2015.csv",'w').close()
+		from scipy.stats.stats import pearsonr 
+		
+		rise = []
+		fall = []
 		
 		listStream = self.getPriceStreamFromCSV(nameFile)
 		for eachData in listStream:
-			self.proceedStep(eachData)
+			dataPrice = self.proceedStep(eachData)
+			fall.append(dataPrice[0])
+			rise.append(dataPrice[1])
+		
+		print pearsonr(fall, rise)
 		
 test = closimStatistician()
 test.init()
+test.testStreamProcessing("./korbitKRW2015.csv")
 
-
 		
 		
 		
@@ -93,3 +77,5 @@ test.init()
 		
 		
 		
+=======
+>>>>>>> parent of dbc16d4... 처리 시작.
