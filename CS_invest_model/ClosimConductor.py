@@ -1,6 +1,9 @@
 import ClosimStatistician
+import os
 
+os.remove("./RAF.db")
 stats = ClosimStatistician.closimStatistician()
+stats.init()
 
 def excuteClosim():
 	pass
@@ -10,7 +13,6 @@ def runStatistician():
 	
 
 	return listData	
-
 
 def getPriceStreamFromCSV(nameFile):
 	fileOpened = open(nameFile)
@@ -26,9 +28,22 @@ def getPriceStreamFromCSV(nameFile):
 	return listPrice
 	
 def testStreamProcessing(nameFile):
-	
-	open("./graph2015.csv",'w').close()
-	
-	listStream = getPriceStreamFromCSV(nameFile)
-	for eachData in listStream:
-		self.proceedStep(eachData)
+    
+
+    listStream = getPriceStreamFromCSV(nameFile)
+
+    stats.createPriceTable("testStream")
+    for eachData in listStream:
+        stats.proceedStep(eachData)
+    stats.clearQuery()
+    
+    stats.selectAllTable()
+    
+import atexit
+
+@atexit.register
+def finalizer():
+    print "You are now leaving the Python sector."    
+    stats.disconnectDataBase()
+    
+testStreamProcessing("./korbitKRW.csv")
