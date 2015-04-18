@@ -59,29 +59,8 @@ class closimStatistician(object):
 	def getAvgDown(self):
 		pass
 	   
-	def getPriceStreamFromCSV(self,nameFile):
-		fileOpened = open(nameFile)
-		listRawAll = fileOpened.readlines()
-		fileOpened.close()
+
 		
-		listPrice = []
-		
-		for eachLine in listRawAll:
-			listLine = eachLine.split(',')
-			listPrice.append(float(listLine[1]))
-			
-		return listPrice
-		
-	def testStreamProcessing(self,nameFile):
-		
-		open("./graph2015.csv",'w').close()
-		
-		listStream = self.getPriceStreamFromCSV(nameFile)
-		for eachData in listStream:
-			self.proceedStep(eachData)
-		
-test = closimStatistician()
-test.init()
 
 
 		
