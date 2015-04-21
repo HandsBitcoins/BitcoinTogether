@@ -72,6 +72,12 @@ def getRateToSell(numStep):
 def calSellAmount(amountBitCoin,numStep=0):
     return amountBitCoin*getRateToSell(numStep)
 
+def getAccumRateToSell(numStep):
+    accum = getRateToSell(numStep)
+    for i in range(numStep):
+        accum += getRateToSell(i)
+    return accum
+
 def calSellPrice(pricePeak,priceBuy,numStep=0,unitCurrency=100.0):
     priceSellReal = (numStep+1)*0.2*calDigByPrices(pricePeak,priceBuy)+priceBuy
     priceSellUnit = math.ceil(priceSellReal/unitCurrency)
@@ -82,30 +88,48 @@ def calSellPrice(pricePeak,priceBuy,numStep=0,unitCurrency=100.0):
 def calFee(price,valFeePercent=0.000):
     return price*valFeePercent
     
-def getRealTotalSell(priceNow,valFall):
+def getRealTotalSell(priceNow,valFall,steps=5):
     totalCost = 0.0
     
-    for i in range(5):
+    for i in range(steps):
         totalCost += calSellPrice(priceNow+valFall,priceNow,i,500.0)*calSellAmount(1.0,i)
         
     return totalCost
     
-def calTotalFee(priceNow,valFall,valFeePercent=0.000):
-    valExpect = getExpectationRatio(valFall)
-    
-    totalCost = getRealTotalSell(priceNow,valFall)
+def calTotalFee(priceNow,valFall,valFeePercent=0.000,steps=5):  
+    totalCost = getRealTotalSell(priceNow,valFall,steps)
         
     return (totalCost+priceNow)*valFeePercent
 
-def getRealTotalProfit(priceNow,valFall,valFeePercent=0.000):
+def getRealTotalProfit(priceNow,valFall,valFeePercent=0.000,steps=5):
     #print getRealTotalSell(priceNow,valFall)
-    return getRealTotalSell(priceNow,valFall) - priceNow - calTotalFee(priceNow,valFall,valFeePercent)
+    priceSell = getRealTotalSell(priceNow,valFall,steps+1)
+
+    priceNowAcuum = priceNow*getAccumRateToSell(steps)
+    fee = calTotalFee(priceNow,valFall,valFeePercent,steps+1)
+#     print priceSell, priceNowAcuum, fee
     
-valFeePercent = 0.001
-for pricePeak in range(250000,280500,500):
-    for valFall in range(500,10500,500):
-        priceNow = pricePeak-valFall
-        ratioDown = calRatioByFallAndNow(valFall,priceNow)
-        valExpect = getExpectationRatio(valFall)
-        print pricePeak, valFall, priceNow, getRealTotalProfit(priceNow,valFall,valFeePercent), calTotalFee(priceNow,valFall,valFeePercent)
-    #print i, getExpectationRatio(i), getExpectationRatio(i)*i
+    return priceSell - priceNowAcuum - fee
+
+# for i in range(5):
+#     valFeePercent = 0.001
+#     printData = [[0 for _ in range(20)]for _ in range(61)]
+#     fileOpen = open("asd"+str(i)+".csv",'w')
+#     fileOpen.write(','+','.join([str(d) for d in range(500,10500,500)])+'\n')
+#     fileOpen.close()
+#     
+#     for pricePeak in range(250000,280500,500):
+#         y = (pricePeak-250000)/500
+#         for valFall in range(500,10500,500):
+#             x = (valFall-500)/500
+#             priceNow = pricePeak-valFall
+#             ratioDown = calRatioByFallAndNow(valFall,priceNow)
+#             valExpect = getExpectationRatio(valFall)
+#             printData[y][x] = getRealTotalProfit(priceNow,valFall,valFeePercent,i)
+#     
+#     fileOpen = open("asd"+str(i)+".csv",'a')
+#     for pricePeak in range(250000,280500,500):
+#         fileOpen.write(str(pricePeak)+','+','.join([str(h) for h in printData[(pricePeak-250000)/500]])+'\n')    
+#     fileOpen.close()
+
+
