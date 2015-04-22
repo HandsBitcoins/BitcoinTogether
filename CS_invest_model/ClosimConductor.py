@@ -2,7 +2,7 @@ import ClosimStatistician
 import os
 
 os.remove("./RAF.db")
-stats = ClosimStatistician.closimStatistician()
+stats = ClosimStatistician.ClosimStatistician()
 stats.init()
 
 def excuteClosim():
@@ -44,6 +44,6 @@ import atexit
 @atexit.register
 def finalizer():
     print "You are now leaving the Python sector."    
-    stats.disconnectDataBase()
+#     stats.disconnectDataBase()
     
 testStreamProcessing("./korbitKRW.csv")

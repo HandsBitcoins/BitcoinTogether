@@ -2,7 +2,76 @@ import math
 
 import scipy.stats
 
-#class closimInnerTrader(object):
+class closimInnerTrader(object):
+    def __init__(self):
+        pass
+    
+    def __del__(self):
+        pass
+    
+    def init(self,API):
+        self.unitCurreny = API.unitCurreny
+        
+        pass
+
+
+    def actInnerTrader(self,priceNow,infoBuy):
+        listQuery = []
+                
+        listQuery += self.buy(infoBuy)
+        listQuery += self.sell(priceNow)
+        
+        self.fuseQuery(listQuery)
+        
+        return listQuery
+                
+#   wave crest and trough
+    def buy(self,infoBuy):
+        listBuyQuery = []
+        if not infoBuy.isBuy:
+            return listBuyQuery
+        else:
+            #cal expectation rising up price
+            valAmplitude = infoBuy.priceCrest - infoBuy.priceTrough
+            rateExpected = self.getExpectationRatio(valAmplitude)
+            priceExpected = self.calPriceQuantized(infoBuy.priceTrough+rateExpected*valAmplitude)
+            
+            #cal expectation profit
+            
+            
+            #if there profit
+                #cal buy amount
+                #return buy query 
+        
+            
+            
+        
+        
+        
+            
+        return listBuyQuery
+    
+    def getExpectationRatio(self,valAmplitude):        
+        return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746
+    
+    def calPriceQuantized(self,priceReal,isFloor=True):        
+        if isFloor:
+            priceSellUnit = math.ceil(priceReal/unitCurrency)
+        else:
+            priceSellUnit = math.floor(priceReal/unitCurrency)
+            
+        priceQuantized = priceSellUnit*self.unitCurrency
+    
+        return priceQuantized
+    
+    def sell(self,priceNow):
+        listSellQuery = []
+        
+        return listSellQuery
+        
+    def fuseQuery(self,listQuery):
+        pass
+    
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown
 
