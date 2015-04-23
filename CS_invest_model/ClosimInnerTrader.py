@@ -1,4 +1,5 @@
 import math
+import random
 
 import scipy.stats
 
@@ -10,11 +11,11 @@ class closimInnerTrader(object):
         pass
     
     def init(self,API):
+        self.rateFee = API.rateFee
         self.unitCurreny = API.unitCurreny
+                
+        self.cashBalances = 0.0
         
-        pass
-
-
     def actInnerTrader(self,priceNow,infoBuy):
         listQuery = []
                 
@@ -38,22 +39,31 @@ class closimInnerTrader(object):
             
             #cal expectation profit
             priceExpectedProfit = self.calPriceExpectedProfit(priceExpectedRising,infoBuy.priceNow)
+            feeExpected = self.calFeeCost(priceExpectedRising,infoBuy.priceNow)
             
             #if there profit
-            if priceExpectedProfit > infoBuy.priceNow:
+            if priceExpectedProfit > infoBuy.priceNow+feeExpected:
                 #cal buy amount
+                rateBasic = getExpectationRatio(valAmplitude)**3
+                rateRandom = random.uniform(0.5, 1.0)
+                
+                rateFinal = rateRandom*rateBasic/10.0
+                amtBuy = rateFinal*self.cashBalances/infoBuy.priceNow
+                
                 #return buy query 
-        
-            
-            
-        
-        
-        
-            
+                query = [amtBuy,infoBuy.priceNow]
+                listBuyQuery.append(query)
+                
         return listBuyQuery
     
     def getExpectationRatio(self,valAmplitude):        
         return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746
+    
+    def calFeeCost(self,priceExpectedRising,priceNow):
+        priceTotal =  self.calPriceExpectedProfit(priceExpectedRising,priceNow)
+        priceTotal += priceNow
+        
+        return priceTotal*self.rateFee
     
     def calPriceExpectedProfit(self,priceExpectedRising,priceNow):
         priceExpectedProfit = 0.0
