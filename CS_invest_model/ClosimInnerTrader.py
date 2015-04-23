@@ -34,12 +34,13 @@ class closimInnerTrader(object):
             #cal expectation rising up price
             valAmplitude = infoBuy.priceCrest - infoBuy.priceTrough
             rateExpected = self.getExpectationRatio(valAmplitude)
-            priceExpected = self.calPriceQuantized(infoBuy.priceTrough+rateExpected*valAmplitude)
+            priceExpectedRising = self.calPriceQuantized(infoBuy.priceTrough+rateExpected*valAmplitude)
             
             #cal expectation profit
-            
+            priceExpectedProfit = self.calPriceExpectedProfit(priceExpectedRising,infoBuy.priceNow)
             
             #if there profit
+            if priceExpectedProfit > infoBuy.priceNow:
                 #cal buy amount
                 #return buy query 
         
@@ -53,6 +54,22 @@ class closimInnerTrader(object):
     
     def getExpectationRatio(self,valAmplitude):        
         return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746
+    
+    def calPriceExpectedProfit(self,priceExpectedRising,priceNow):
+        priceExpectedProfit = 0.0
+        for i in range(5):
+            priceExpectedProfit += self.calRateSell(i)*self.calPriceSell(priceExpectedRising,priceNow,i)
+            
+        return priceExpectedProfit
+        
+    def calRateSell(self,numStep=0):
+        return -1.0*((numStep**3.0)-6.0*(numStep**2.0)+5.0*numStep)/60.0+0.1
+    
+    def calPriceSell(self,priceExpectedRising,priceNow,numStep=0):
+        stepPrice = (priceExpected-priceNow)/5.0
+        priceSteped = priceNow+stepPrice*(numStep+1)
+        
+        return self.calPriceQuantized(priceSteped)
     
     def calPriceQuantized(self,priceReal,isFloor=True):        
         if isFloor:
