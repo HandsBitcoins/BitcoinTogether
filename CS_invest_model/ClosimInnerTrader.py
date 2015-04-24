@@ -16,6 +16,12 @@ class closimInnerTrader(object):
                 
         self.cashBalances = 0.0
         
+    def connectDatabase(self):
+        pass
+        
+    def disconnectDatabase(self):
+        pass
+        
     def actInnerTrader(self,priceNow,infoBuy):
         listQuery = []
                 

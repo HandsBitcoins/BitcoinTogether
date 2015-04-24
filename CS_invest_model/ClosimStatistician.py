@@ -78,7 +78,7 @@ class ClosimStatistician(object):
         return dataSet
                 
     def selectAllTable(self):
-        self.cursor.execute("SELECT * FROM " + self.nameTable)        
+        self.cursor.execute("SELECT * FROM " + self.nameTable)
         dataAll = self.cursor.fetchall()
         
         for eachData in dataAll:
