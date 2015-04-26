@@ -122,15 +122,15 @@ class TrakerBitcoinBollinger(object):
             self.counterMail -= 1
             
         if abs(self.previousAlterPrice-price) > 6:
-            self.counterMail = 0
-            self.previousAlterPrice = price
+            self.counterMail = 0            
             
-        if self.counterMail == 0 and alterState:
-            self.counterMail = self.timeMailBeacon
-            self.mailServer.sendEmail(subject,content)
-                         
+        if self.counterMail == 0:
+            self.previousAlterPrice = price
+            if alterState:
+                self.counterMail = self.timeMailBeacon
+                self.mailServer.sendEmail(subject,content)
+                             
         return alterState
-
 
     def getStandardDeviation(self,menu=0):
         import numpy
