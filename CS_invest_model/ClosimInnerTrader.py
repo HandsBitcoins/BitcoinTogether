@@ -1,14 +1,16 @@
 import math
 import random
+import sqlite3
 
 import scipy.stats
 
 class closimInnerTrader(object):
     def __init__(self):
-        pass
+        self.nameDB = "balance.db"
+        self.connectDatabase()
     
     def __del__(self):
-        pass
+        self.disconnectDatabase()
     
     def init(self,API):
         self.rateFee = API.rateFee
@@ -16,15 +18,9 @@ class closimInnerTrader(object):
                 
         self.cashBalances = 0.0
         
-    def connectDatabase(self):
-        pass
-        
-    def disconnectDatabase(self):
-        pass
-        
     def actInnerTrader(self,priceNow,infoBuy):
         listQuery = []
-                
+
         listQuery += self.buy(infoBuy)
         listQuery += self.sell(priceNow)
         
@@ -97,13 +93,31 @@ class closimInnerTrader(object):
     
         return priceQuantized
     
-    def sell(self,priceNow):
+    def sell(self,priceNowBid):
         listSellQuery = []
+        
+        self.cursor.execute("CREATE TABLE " + nameTable + "(priceFall float, priceRise float)") 
         
         return listSellQuery
         
     def fuseQuery(self,listQuery):
         pass
+    
+    def createPriceTable(self,nameTable):
+        #amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
+        self.cursor.execute("CREATE TABLE " + nameTable + "(amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float)") 
+        self.nameTable = nameTable
+    
+    def connectDatabase(self):
+        self.connDB = sqlite3.connect(self.nameDB)
+        self.cursor = self.connDB.cursor()
+        
+    def disconnectDatabase(self):
+        self.connDB.commit()
+        self.connDB.close()
+        
+    def clearQuery(self):
+        self.connDB.commit()
     
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown

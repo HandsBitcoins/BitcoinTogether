@@ -10,10 +10,10 @@ class InfoBuy(object):
 class ClosimStatistician(object):
     def __init__(self):
         self.nameDB = "RAF.db"
-        self.connectDataBase()
+        self.connectDatabase()
     
     def __del__(self):
-        self.disconnectDataBase()    
+        self.disconnectDatabase()
     
     def init(self):
         self.isBuy = False
@@ -28,11 +28,11 @@ class ClosimStatistician(object):
         
         self.nameTable = ""
                         
-    def connectDataBase(self):
+    def connectDatabase(self):
         self.connDB = sqlite3.connect(self.nameDB)
         self.cursor = self.connDB.cursor()
         
-    def disconnectDataBase(self):
+    def disconnectDatabase(self):
         self.connDB.commit()
         self.connDB.close()
     
