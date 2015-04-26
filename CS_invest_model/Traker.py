@@ -19,7 +19,7 @@ class TrakerBitcoinBollinger(object):
     
     def initTraker(self):
         # 1sec interval, 5days
-        self.numDataPrice = 24*60*60 
+        self.numDataPrice = 12*60*60 
         
         self.counter = 0
         self.bids = [0.0 for _ in range(self.numDataPrice)]
@@ -45,6 +45,7 @@ class TrakerBitcoinBollinger(object):
                              'lower': 2}
         self.tendency = self.dictTendency['normal']
         
+        self.previousAlterPrice = 0.0
         self.counterMail = 0
         
     def setMailServer(self):
@@ -118,7 +119,11 @@ class TrakerBitcoinBollinger(object):
             self.tendency = self.dictTendency['normal']
             
         if self.counterMail > 0:
-            self.counterMail -= 1                
+            self.counterMail -= 1
+            
+        if abs(self.previousAlterPrice-price) > 6:
+            self.counterMail = 0
+            self.previousAlterPrice = price
             
         if self.counterMail == 0 and alterState:
             self.counterMail = self.timeMailBeacon
