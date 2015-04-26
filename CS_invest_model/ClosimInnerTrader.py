@@ -96,7 +96,15 @@ class closimInnerTrader(object):
     def sell(self,priceNowBid):
         listSellQuery = []
         
-        self.cursor.execute("CREATE TABLE " + nameTable + "(priceFall float, priceRise float)") 
+        #amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE nextSellPrice < " + str(priceNowBid))
+        listSellQuery = self.cursor.fetchall()
+        
+        #processing
+        #sum sell amount
+        #make next step 
+        
+        
         
         return listSellQuery
         
