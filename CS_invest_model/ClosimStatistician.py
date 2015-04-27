@@ -42,6 +42,7 @@ class ClosimStatistician(object):
         self.connDB.commit()
         
     def proceedStep(self,priceAsk):
+        self.isBuy = False
         self.streamData.append(priceAsk)
     
         nowUp = 0.0
@@ -59,11 +60,11 @@ class ClosimStatistician(object):
                 self.priceNow = self.streamData[-1]
                 self.nowDown = self.streamData[0] - self.streamData[-2]
 #               print "DESEN", self.streamData
-                self.streamData = self.streamData[-2:]
-                
+                self.streamData = self.streamData[-2:]                
         else:           
             if self.streamData[-1] < self.streamData[-2]:
-                self.isDesending = True             
+                self.isDesending = True
+                
                 nowUp = self.streamData[-2] - self.streamData[0]
 #               print "ASEN ", self.streamData
                 self.streamData = self.streamData[-2:]

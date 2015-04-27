@@ -17,9 +17,16 @@ class closimInnerTrader(object):
     def init(self,API):
         self.rateFee = API.rateFee
         self.unitCurreny = API.unitCurreny
-                
         self.cashBalances = 0.0
         
+        self.dictBalanceDBIndex = {balanceID:       0,
+                                   amountBuy:       1,
+                                   priceBuy:        2,
+                                   priceExpected:   3,
+                                   nowSteps:        4,
+                                   nextSellAmount:  5,
+                                   nextSellPrice:   6}
+                
     def testBuy(self):
         self.buy(infoBuy)
                 
@@ -61,7 +68,7 @@ class closimInnerTrader(object):
                 #Sell, amount, price
                 query = [0,amtBuy,infoBuy.priceNow]
                 listBuyQuery.append(query)
-                
+        
         return listBuyQuery
     
     def getExpectationRatio(self,valAmplitude):        
@@ -108,8 +115,10 @@ class closimInnerTrader(object):
         
         #processing
         #sort by price increase order
+        listSellQuery.sort(key=itemgetter(self.dictBalanceDBIndex[nextSellPrice]))
         
         #sum sell amount until amountNowBid
+        
         
         #
         
