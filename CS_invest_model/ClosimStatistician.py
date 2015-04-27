@@ -1,12 +1,7 @@
 import sqlite3
 
-class InfoBuy(object):
-    def __init__(self,isBuy, priceCrest, priceTrough, priceNow):
-        self.isBuy = isBuy
-        self.priceCrest = priceCrest
-        self.priceTrough = priceTrough
-        self.priceNow = priceNow
-    
+import ClosimCommonMessageObjects
+
 class ClosimStatistician(object):
     def __init__(self):
         self.nameDB = "RAF.db"
@@ -85,7 +80,7 @@ class ClosimStatistician(object):
             print eachData[0], eachData[1]
             
     def getInfoBuy(self):
-        infoBuy = InfoBuy(self.isBuy, self.priceCrest, self.priceTrough, self.priceNow)        
+        infoBuy = ClosimCommonMessageObjects.InfoBuy(self.isBuy, self.priceCrest, self.priceTrough, self.priceNow)        
         return infoBuy
            
     def getStdDown(self):

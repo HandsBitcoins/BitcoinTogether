@@ -4,6 +4,8 @@ import sqlite3
 
 import scipy.stats
 
+import ClosimCommonMessageObjects
+
 class closimInnerTrader(object):
     def __init__(self):
         self.nameDB = "balance.db"
@@ -18,11 +20,14 @@ class closimInnerTrader(object):
                 
         self.cashBalances = 0.0
         
-    def actInnerTrader(self,priceNow,infoBuy):
+    def testBuy(self):
+        self.buy(infoBuy)
+                
+    def actInnerTrader(self,infoSell,infoBuy):
         listQuery = []
 
         listQuery += self.buy(infoBuy)
-        listQuery += self.sell(priceNow)
+        listQuery += self.sell(infoSell)
         
         self.fuseQuery(listQuery)
         
@@ -52,8 +57,9 @@ class closimInnerTrader(object):
                 rateFinal = rateRandom*rateBasic/10.0
                 amtBuy = rateFinal*self.cashBalances/infoBuy.priceNow
                 
-                #return buy query 
-                query = [amtBuy,infoBuy.priceNow]
+                #return buy query
+                #Sell, amount, price
+                query = [0,amtBuy,infoBuy.priceNow]
                 listBuyQuery.append(query)
                 
         return listBuyQuery
@@ -93,16 +99,22 @@ class closimInnerTrader(object):
     
         return priceQuantized
     
-    def sell(self,priceNowBid):
+    def sell(self,infoSell):
         listSellQuery = []
         
-        #amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
-        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE nextSellPrice < " + str(priceNowBid))
+        #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE nextSellPrice < " + str(infoSell.priceBid))
         listSellQuery = self.cursor.fetchall()
         
         #processing
-        #sum sell amount
-        #make next step 
+        #sort by price increase order
+        
+        #sum sell amount until amountNowBid
+        
+        #
+        
+        
+        #update each balance next step 
         
         
         
@@ -112,8 +124,8 @@ class closimInnerTrader(object):
         pass
     
     def createPriceTable(self,nameTable):
-        #amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
-        self.cursor.execute("CREATE TABLE " + nameTable + "(amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float)") 
+        #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
+        self.cursor.execute("CREATE TABLE " + nameTable + "(balanceID INTEGER PRIMARY KEY AUTOINCREMENT, amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float)") 
         self.nameTable = nameTable
     
     def connectDatabase(self):
@@ -126,6 +138,8 @@ class closimInnerTrader(object):
         
     def clearQuery(self):
         self.connDB.commit()
+        
+
     
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown
