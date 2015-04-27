@@ -119,10 +119,9 @@ class TrakerBitcoinBollinger(object):
             self.tendency = self.dictTendency['normal']
             
         if self.counterMail > 0:
-            self.counterMail -= 1
-            
-        if abs(self.previousAlterPrice-price) > 6:
-            self.counterMail = 0            
+            self.counterMail -= 1            
+            if abs(self.previousAlterPrice-price) > 6:
+                self.counterMail = 0
             
         if self.counterMail == 0:
             self.previousAlterPrice = price
