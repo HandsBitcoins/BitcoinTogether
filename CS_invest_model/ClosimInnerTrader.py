@@ -19,6 +19,11 @@ class closimInnerTrader(object):
         self.unitCurreny = API.unitCurreny
         self.cashBalances = 0.0
         
+        self.isPrevBuy = True
+        self.prevPriceCrest = 0.0
+        self.prevPriceTrough = 0.0
+        self.countFuse = 1.0
+
         self.dictBalanceDBIndex = {balanceID:       0,
                                    amountBuy:       1,
                                    priceBuy:        2,
@@ -46,6 +51,15 @@ class closimInnerTrader(object):
         if not infoBuy.isBuy:
             return listBuyQuery
         else:
+            if self.isPrevBuy:
+                if self.prevPriceCrest > infoBuy.priceCrest:
+                    infoBuy.priceCrest = self.prevPriceCrest
+                    if self.prevPriceTrough < infoBuy.priceTrough:
+                        infoBuy.priceTrough = self.prevPriceTrough
+                self.countFuse += 1.0
+            else:
+                self.countFuse = 1.0
+            
             #cal expectation rising up price
             valAmplitude = infoBuy.priceCrest - infoBuy.priceTrough
             rateExpected = self.getExpectationRatio(valAmplitude)
@@ -59,15 +73,17 @@ class closimInnerTrader(object):
             if priceExpectedProfit > infoBuy.priceNow+feeExpected:
                 #cal buy amount
                 rateBasic = getExpectationRatio(valAmplitude)**3
-                rateRandom = random.uniform(0.5, 1.0)
-                
+                rateRandom = random.uniform(0.5, 1.0)                
                 rateFinal = rateRandom*rateBasic/10.0
-                amtBuy = rateFinal*self.cashBalances/infoBuy.priceNow
+                
+                amtBuy = rateFinal*self.cashBalances/infoBuy.priceNow/self.countFuse
                 
                 #return buy query
                 #Sell, amount, price
                 query = [0,amtBuy,infoBuy.priceNow]
                 listBuyQuery.append(query)
+            
+            self.isPrevBuy = priceExpectedProfit < infoBuy.priceNow+feeExpected
         
         return listBuyQuery
     
