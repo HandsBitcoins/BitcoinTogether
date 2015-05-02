@@ -127,26 +127,22 @@ class closimInnerTrader(object):
         
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
         self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE nextSellPrice < " + str(infoSell.priceBid))
-        listSellQuery = self.cursor.fetchall()
+        listFetchQuery = self.cursor.fetchall()
         
         #processing
         #sort by price increase order
-        listSellQuery.sort(key=itemgetter(self.dictBalanceDBIndex[nextSellPrice]))
+        listFetchQuery.sort(key=itemgetter(self.dictBalanceDBIndex[nextSellPrice]))
         
         #sum sell amount until amountNowBid
-        
-        
-        #
-        
-        
-        #update each balance next step 
-        
-        
+        for eachFetchQuery in listFetchQuery:
+            processQuery = [1,eachFetchQuery[self.dictBalanceDBIndex[nextSellAmount],eachFetchQuery[self.dictBalanceDBIndex[nextSellPrice]]
+            listSellQuery.append(processQuery)
         
         return listSellQuery
         
     def fuseQuery(self,listQuery):
-        pass
+        
+        
     
     def createPriceTable(self,nameTable):
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
