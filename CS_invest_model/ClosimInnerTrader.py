@@ -31,6 +31,9 @@ class closimInnerTrader(object):
                                    nowSteps:        4,
                                    nextSellAmount:  5,
                                    nextSellPrice:   6}
+                                   
+        self.dictMenu = {0: "buy",
+                                1: "sell"}
                 
     def testBuy(self):
         self.buy(infoBuy)
@@ -41,7 +44,7 @@ class closimInnerTrader(object):
         listQuery += self.buy(infoBuy)
         listQuery += self.sell(infoSell)
         
-        self.fuseQuery(listQuery)
+        self.fuseQuery(listQuery,infoSell)
         
         return listQuery
                 
@@ -80,7 +83,7 @@ class closimInnerTrader(object):
                 
                 #return buy query
                 #Sell, amount, price
-                query = [0,amtBuy,infoBuy.priceNow]
+                query = [self.dictMenu["buy"],amtBuy,infoBuy.priceNow]
                 listBuyQuery.append(query)
             
             self.isPrevBuy = priceExpectedProfit < infoBuy.priceNow+feeExpected
@@ -135,13 +138,24 @@ class closimInnerTrader(object):
         
         #sum sell amount until amountNowBid
         for eachFetchQuery in listFetchQuery:
-            processQuery = [1,eachFetchQuery[self.dictBalanceDBIndex[nextSellAmount],eachFetchQuery[self.dictBalanceDBIndex[nextSellPrice]]
+            processQuery = [self.dictMenu["sell"],eachFetchQuery[self.dictBalanceDBIndex[nextSellAmount],eachFetchQuery[self.dictBalanceDBIndex[nextSellPrice]]
             listSellQuery.append(processQuery)
         
         return listSellQuery
         
-    def fuseQuery(self,listQuery):
-        
+    def fuseQuery(self,listQuery,infoSell):
+        if len(listQuery) < 2:
+            return listQuery
+            
+        if listQuery[0][0] == self.dictMenu["buy"]:
+            amtBuyTransSell = listQuery[0][1]
+            
+            for eachQuery in listQuery[1:]:
+                
+                if amtBuyTransSell > eachQuery[1]:
+                    amtBuyTransSell -= eachQuery[1]
+                    eachQuery[1] = 0
+            
         
     
     def createPriceTable(self,nameTable):
