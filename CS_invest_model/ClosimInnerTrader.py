@@ -115,8 +115,8 @@ class closimInnerTrader(object):
         
         return self.calPriceQuantized(priceSteped)
     
-    def calPriceQuantized(self,priceReal,isFloor=True):        
-        if isFloor:
+    def calPriceQuantized(self,priceReal,isCeil=True):        
+        if isCeil:
             priceSellUnit = math.ceil(priceReal/unitCurrency)
         else:
             priceSellUnit = math.floor(priceReal/unitCurrency)
@@ -124,6 +124,16 @@ class closimInnerTrader(object):
         priceQuantized = priceSellUnit*self.unitCurrency
     
         return priceQuantized
+    
+    def getRateToSell(self, numStep):
+        #step = 5 => 30%
+        #step = 4 => 30%
+        #step = 3 => 20%
+        #step = 2 => 10%
+        #step = 1 => 10%
+        #-1/6*(x^3-6x^2+5x-6)
+        
+        return -1.0*((numStep**3.0)-6.0*(numStep**2.0)+5.0*numStep)/60.0+0.1    
     
     def sell(self,infoSell):
         listSellQuery = []
@@ -138,7 +148,7 @@ class closimInnerTrader(object):
         
         #sum sell amount until amountNowBid
         for eachFetchQuery in listFetchQuery:
-            processQuery = [self.dictMenu["sell"],eachFetchQuery[self.dictBalanceDBIndex[nextSellAmount],eachFetchQuery[self.dictBalanceDBIndex[nextSellPrice]]
+            processQuery = [self.dictMenu["sell"],eachFetchQuery[self.dictBalanceDBIndex[nextSellAmount]],eachFetchQuery[self.dictBalanceDBIndex[nextSellPrice]],eachFetchQuery[self.dictBalanceDBIndex[balanceID]]]
             listSellQuery.append(processQuery)
         
         return listSellQuery
@@ -150,13 +160,61 @@ class closimInnerTrader(object):
         if listQuery[0][0] == self.dictMenu["buy"]:
             amtBuyTransSell = listQuery[0][1]
             
-            for eachQuery in listQuery[1:]:
-                
+            for eachQuery in listQuery[1:]:                
                 if amtBuyTransSell > eachQuery[1]:
                     amtBuyTransSell -= eachQuery[1]
-                    eachQuery[1] = 0
+                    eachQuery[1] = 0.0
+                else:
+                    eachQuery[1] -= amtBuyTransSell
+                    break
             
+            newListQuery = []
+            for eachQuery in listQuery[1:]:
+                if eachQuery[1] != 0.0:
+                    newListQuery.append(eachQuery)
+                else:                    
+                    self.processBalanceNextStep(eachQuery[3])
+                    
+            return newListQuery
         
+        return listQuery
+        
+    def processBalanceNextStep(self,balaceID):
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE balaceID = " + str(balaceID))
+        listFetchQuery = self.cursor.fetchall()
+        
+        if len(listFetchQuery) != 1:
+            print "Fail to load balance from ID."
+            return False
+        
+        if listFetchQuery[0][self.dictBalanceDBIndex[nowSteps]] != 4:
+            self.proceedBalance(listFetchQuery[0])
+        else:
+            self.destructBalance(balaceID)
+        
+    def proceedBalance(self,tupleQueried):
+        #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
+        balaceID = tupleQueried[self.dictBalanceDBIndex[balanceID]]
+        nowSteps = tupleQueried[self.dictBalanceDBIndex[nowSteps]]
+        priceExpected = tupleQueried[self.dictBalanceDBIndex[priceExpected]]
+        priceBuy = tupleQueried[self.dictBalanceDBIndex[priceBuy]]
+        amtBuy = tupleQueried[self.dictBalanceDBIndex[amountBuy]]
+        
+        priceNext = priceBuy+(priceExpected-priceBuy)/5.0*(nowSteps+1.0)
+        priceNextQuntaized = self.calPriceQuantized(priceNext)
+        
+        amtNext = amtBuy*self.getRateToSell(numSteps+1)
+
+        self.cursor.execute("UPDATE " + self.nameTable + " SET nowSteps = " + str(nowSteps+1) +
+                            ", nextSellAmount = " + str(amtNext) + 
+                            ", nextSellPrice = " + str(priceNextQuntaized) +
+                            " WHERE balaceID = " + str(balaceID))
+        
+        self.clearQuery()
+    
+    def destructBalance(self,balaceID):
+        self.cursor.execute("DELETE FROM " + self.nameTable + " WHERE balaceID = " + str(balaceID))
+        self.clearQuery()
     
     def createPriceTable(self,nameTable):
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
