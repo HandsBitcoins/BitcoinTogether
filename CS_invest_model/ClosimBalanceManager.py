@@ -1,4 +1,6 @@
-class ClosimBalanceManager(object):
+import ClosimCalculator
+
+class ClosimBalanceManager(ClosimCalculator.closimCalculator):
     def __init__(self):
         self.nameDB = "balance.db"
         self.connectDatabase()
@@ -45,22 +47,26 @@ class ClosimBalanceManager(object):
     def registerBalance(self,infoBalanceBuy):
         #INSERT INTO TABLE_NAME (column1, column2, column3,...columnN) VALUES (value1, value2, value3,...valueN);
         self.cursor.execute("INSERT INTO " + self.nameTable + "(amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice) VALUES ("  + str(infoBalanceBuy) + ")") 
-        
-    def updateBalanceSellAmt(self,balaceId,amtNext):
 
-
-    def processBalanceNextStep(self,balaceID):
+    def getBalanceInfoByID(self,balanceID):
         self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE balaceID = " + str(balaceID))
         listFetchQuery = self.cursor.fetchall()
         
         if len(listFetchQuery) != 1:
             print "Fail to load balance from ID."
-            return False
+            return False        
+        
+    def updateBalanceSellAmt(self,balaceId,amtNext):
+        self.cursor.execute("UPDATE " + self.nameTable + "SET nextSellAmount=" + amtNext + " WHERE balaceID = " + str(balaceID))
+        
+
+    def processBalanceNextStep(self,balanceID):
+        self.getBalanceInfoByID(balanceID)
         
         if listFetchQuery[0][self.dictBalanceDBIndex[nowSteps]] != 4:
             self.proceedBalance(listFetchQuery[0])
         else:
-            self.destructBalance(balaceID)
+            self.destructBalance(balanceID)
             
     def destructBalance(self,balaceID):
         self.cursor.execute("DELETE FROM " + self.nameTable + " WHERE balaceID = " + str(balaceID))

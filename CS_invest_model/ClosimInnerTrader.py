@@ -20,11 +20,8 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
         self.countFuse = 1.0
                                    
         self.dictMenu = {0: "buy",
-                                1: "sell"}
-                
-    def testBuy(self):
-        self.buy(infoBuy)
-                
+                         1: "sell"}
+                                
     def actInnerTrader(self,infoSell,infoBuy):
         listQuery = []
 
@@ -111,9 +108,6 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
             
             if not isBuyProcessed:
                 newListQuery.append(listQuery[0])
-            else:
-                #add new balance
-                
             
             for eachQuery in listQuery[1:]:
                 if eachQuery[1] != 0.0:
