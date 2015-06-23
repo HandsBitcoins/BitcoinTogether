@@ -44,12 +44,14 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         
     def createPriceTable(self,nameTable="BITCOIN_BALANCE"):
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
-        self.cursor.execute("CREATE TABLE " + nameTable + "(balanceID INTEGER PRIMARY KEY AUTOINCREMENT, amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float)") 
-        self.nameTable = nameTable
+        self.cursor.execute("CREATE TABLE " + nameTable + "(balanceID INTEGER PRIMARY KEY AUTOINCREMENT, amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float)")
+        
+        self.clearQuery()
 
-    def registerBalance(self,infoBalanceBuy):
+    def registerBalanceByInfoBalance(self,infoBalanceBuy):
         #INSERT INTO TABLE_NAME (column1, column2, column3,...columnN) VALUES (value1, value2, value3,...valueN);        
-        self.cursor.execute("INSERT INTO " + self.nameTable + "(amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice) VALUES ("  + str(infoBalanceBuy) + ")") 
+        self.cursor.execute("INSERT INTO " + self.nameTable + "(amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice) VALUES ("  + str(infoBalanceBuy) + ")")
+        self.clearQuery() 
 
     def searchBalanceToSell(self,priceToSell):        
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
@@ -71,9 +73,6 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
             return False
         
         return listFetchQuery[0]
-        
-#     def updateBalanceSellAmt(self,balanceID,numNextStep):        
-#         self.cursor.execute("UPDATE " + self.nameTable + "SET nextSellAmount=" + amtNext + " WHERE balaceID = " + str(balanceID))
         
     def proceedBalance(self,balanceID):
         infoQueriedBalance = self.getBalanceInfoByID(balanceID) 
@@ -104,6 +103,10 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
                             ", nextSellPrice = " + str(priceNext) +
                             " WHERE balanceID = " + str(balanceID))
         
+        self.clearQuery()
+
+    def updateBalanceSellAmt(self,balanceID,newAmount):        
+        self.cursor.execute("UPDATE " + self.nameTable + "SET nextSellAmount=" + newAmount + " WHERE balaceID = " + str(balanceID))
         self.clearQuery()
         
 # import DummyAPI
