@@ -8,12 +8,7 @@ import ClosimCalculator
 import ClosimCommonMessageObjects
 
 class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
-    def __init__(self):
-        pass
-        
-    def init(self,API,manager):
-        super(ClosimInnerTrader, self).init(API,manager)
-        
+    def __init__(self,API,balanceManager):
         self.isPrevBuy = True
         self.prevPriceCrest = 0.0
         self.prevPriceTrough = 0.0
@@ -21,7 +16,10 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
                                    
         self.dictMenu = {0: "buy",
                          1: "sell"}
-                                
+        
+        ClosimCalculator.ClosimCalculator.__init__(self,API)
+        self.balanceManager = balanceManager
+                                    
     def actInnerTrader(self,infoSell,infoBuy):
         listQuery = []
 
@@ -169,8 +167,8 @@ def checkFeeConditionVal(priceNow,valFall,valFeePercent=0.000):
     #print calMinRate(ratioDown,valExpect) , valFeePercent*(2+calMaxRate(ratioDown,valExpect))
     return calMinRate(ratioDown,valExpect) > valFeePercent*(2+calMaxRate(ratioDown,valExpect))
     
-def checkFeeConditionRatio(ratioDown,valExpect,valFeePercent=0.000):
-    return getMinRate(ratioDown,valExpect) > valFeePercent*(2+calMaxRate(ratioDown,valExpect))    
+# def checkFeeConditionRatio(ratioDown,valExpect,valFeePercent=0.000):
+#     return getMinRate(ratioDown,valExpect) > valFeePercent*(2+calMaxRate(ratioDown,valExpect))
 
 def calBuyAmount(fundRemain,valExpect):
     return fundRemain*(valExpect**2)

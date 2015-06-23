@@ -24,10 +24,23 @@ class InfoBalance(object):
         listStr.append(str(self.nextSellPrice))
         
         return ', '.join(listStr)
-
-    def initByData(self, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice, balanceID=-1):
-        #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
+    
+    def initByPriceAndAmount(self, amountBuy, priceBuy, priceExpected):
+        import ClosimCalculator
+        self.balanceID = -1
         
+        self.amountBuy = amountBuy
+        self.priceBuy = priceBuy
+        self.priceExpected = priceExpected
+        
+        self.nowSteps = 0
+        
+        cloCal = ClosimCalculator.ClosimCalculator()        
+        self.nextSellAmount = cloCal.calRateSell(self.nowSteps)*self.amountBuy
+        self.nextSellPrice = cloCal.calPriceSell(self.priceExpected, self.priceBuy, self.nowSteps)
+    
+    def initByData(self, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice, balanceID=-1):
+        #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice        
         self.balanceID = balanceID
         self.amountBuy = amountBuy
         self.priceBuy = priceBuy

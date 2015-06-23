@@ -1,17 +1,22 @@
-class closimCalculator(object):
-    def __init__(self):
-        pass
+import math
 
-    def init(self,API,manager):
-        self.manager = manager
-    
+class ClosimCalculator(object):
+    def __init__(self,API):
         self.rateFee = API.rateFee
-        self.unitCurreny = API.unitCurreny
-        self.cashBalances = 0.0
+        self.unitCurrency = API.unitCurrency
+        self.cashBalances = API.getCashBalance()
+                
+    def calPriceExpected(self,priceCrest,priceTrough):
+        valAmplitude = abs(priceCrest-priceTrough)
+        ratioExpected = self.getExpectationRatio(valAmplitude)
         
-    def getExpectationRatio(self,valAmplitude):        
+        priceExpected = priceTrough*ratioExpected
+        
+        return self.calPriceQuantized(priceExpected)
+        
+    def getExpectationRatio(self,valAmplitude):
         return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746
-    
+        
     def calFeeCost(self,priceExpectedRising,priceNow):
         priceTotal =  self.calPriceExpectedProfit(priceExpectedRising,priceNow)
         priceTotal += priceNow
@@ -29,16 +34,16 @@ class closimCalculator(object):
         return -1.0*((numStep**3.0)-6.0*(numStep**2.0)+5.0*numStep)/60.0+0.1
     
     def calPriceSell(self,priceExpectedRising,priceNow,numStep=0):
-        stepPrice = (priceExpected-priceNow)/5.0
+        stepPrice = (priceExpectedRising-priceNow)/5.0
         priceSteped = priceNow+stepPrice*(numStep+1)
         
         return self.calPriceQuantized(priceSteped)
     
-    def calPriceQuantized(self,priceReal,isCeil=True):        
+    def calPriceQuantized(self,priceReal,isCeil=True):
         if isCeil:
-            priceSellUnit = math.ceil(priceReal/unitCurrency)
+            priceSellUnit = math.ceil(priceReal/self.unitCurrency)
         else:
-            priceSellUnit = math.floor(priceReal/unitCurrency)
+            priceSellUnit = math.floor(priceReal/self.unitCurrency)
             
         priceQuantized = priceSellUnit*self.unitCurrency
     
