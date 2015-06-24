@@ -86,7 +86,8 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         self.cursor.execute("DELETE FROM " + self.nameTable + " WHERE balanceID = " + str(balaceID))
         self.clearQuery()
         
-    def processBalanceNextStep(self,tupleQueried):
+    def processBalanceNextStep(self,tupleQueried):        
+        
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
         balanceID = tupleQueried[self.dictBalanceDBIndex["balanceID"]]
         nowSteps = tupleQueried[self.dictBalanceDBIndex["nowSteps"]]
@@ -106,7 +107,7 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         self.clearQuery()
 
     def updateBalanceSellAmt(self,balanceID,newAmount):        
-        self.cursor.execute("UPDATE " + self.nameTable + "SET nextSellAmount=" + newAmount + " WHERE balaceID = " + str(balanceID))
+        self.cursor.execute("UPDATE " + self.nameTable + " SET nextSellAmount = " + str(newAmount) + " WHERE balaceID = " + str(balanceID))
         self.clearQuery()
         
 # import DummyAPI

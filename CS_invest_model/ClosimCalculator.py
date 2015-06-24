@@ -10,12 +10,15 @@ class ClosimCalculator(object):
         valAmplitude = abs(priceCrest-priceTrough)
         ratioExpected = self.getExpectationRatio(valAmplitude)
         
-        priceExpected = priceTrough*ratioExpected
+        priceExpected = priceTrough + valAmplitude*ratioExpected
+        
+#         print priceCrest, priceTrough, valAmplitude, ratioExpected, priceExpected
         
         return self.calPriceQuantized(priceExpected)
         
     def getExpectationRatio(self,valAmplitude):
         return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746
+        
         
     def calFeeCost(self,priceExpectedRising,priceNow):
         priceTotal =  self.calPriceExpectedProfit(priceExpectedRising,priceNow)
@@ -58,3 +61,9 @@ class ClosimCalculator(object):
         #-1/6*(x^3-6x^2+5x-6)
         
         return -1.0*((numStep**3.0)-6.0*(numStep**2.0)+5.0*numStep)/60.0+0.1    
+    
+    
+    
+        
+# for valAmplitude in range(0,10000,100):
+#     print valAmplitude, 103.79133081279231**(-valAmplitude/8559.704161857346)

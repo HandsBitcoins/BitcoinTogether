@@ -1,11 +1,32 @@
+import random
+
+import ClosimCommonMessageObjects
+
 class DummyAPI(object):
     def __init__(self):
         self.rateFee = 0.001
-        self.unitCurrency = 500
+        self.unitCurrency = 500.0
+        self.cashBalance = 10000000.0
+        
+        self.nowPriceAsk = 260000.0
+        self.nowPriceBid = 250000.0
         
     def getCashBalance(self):
-        return 1000000
+        return self.cashBalance
 
+    def getMarketInfo(self):        
+        self.nowPriceAsk += int(random.normalvariate(0,8))*self.unitCurrency
+        self.nowPriceBid -= int(random.normalvariate(0,8))*self.unitCurrency
+        
+        if self.nowPriceAsk < self.nowPriceBid:
+            self.nowPriceAsk = self.nowPriceBid + 10000.0
+        
+        valAskAmount = abs(random.normalvariate(0,2)+1)
+        valBidAmount = abs(random.normalvariate(0,2)+1)
+        
+        infoMarket = ClosimCommonMessageObjects.InfoMarket(self.nowPriceAsk, self.nowPriceBid, valAskAmount, valBidAmount)
+        
+        return infoMarket
 
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown

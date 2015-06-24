@@ -11,7 +11,6 @@ def excuteClosim():
 def runStatistician():
 	listData = [] #[priceBid,isPeakFall,priceAsk,nowFall,avgFall,stdFall]
 	
-
 	return listData	
 
 def getPriceStreamFromCSV(nameFile):
@@ -28,22 +27,20 @@ def getPriceStreamFromCSV(nameFile):
 	return listPrice
 	
 def testStreamProcessing(nameFile):
-    
+	listStream = getPriceStreamFromCSV(nameFile)
 
-    listStream = getPriceStreamFromCSV(nameFile)
+	stats.createPriceTable("testStream")
+	for eachData in listStream:
+		stats.proceedStep(eachData)
+	stats.clearQuery()
+	
+	stats.selectAllTable()
 
-    stats.createPriceTable("testStream")
-    for eachData in listStream:
-        stats.proceedStep(eachData)
-    stats.clearQuery()
-    
-    stats.selectAllTable()
-    
 import atexit
 
 @atexit.register
 def finalizer():
-    print "You are now leaving the Python sector."    
+	print "You are now leaving the Python sector."    
 #     stats.disconnectDataBase()
-    
+
 testStreamProcessing("./korbitKRW.csv")

@@ -1,14 +1,29 @@
 class InfoBuy(object):
-    def __init__(self, isBuy, priceCrest, priceTrough, priceNow):
+    def __init__(self, isBuy, priceCrest, priceTrough, priceNow, amountAsk):
         self.isBuy = isBuy
         self.priceCrest = priceCrest
         self.priceTrough = priceTrough
         self.priceNow = priceNow
+        self.amountAsk = amountAsk
+        
+    def __str__(self):
+        return  "IsBuy: " + str(self.isBuy) + ", PriceCrest: " + str(self.priceCrest) + ", PriceTrough: " + str(self.priceTrough) + ", PriceNow: " + str(self.priceNow) + ", AmountAsk: " + str(self.amountAsk)  
 
 class InfoSell(object):
-    def __init__(self, priceBid, amountBid):
+    def __init__(self, priceBid, amountBid, balanceID=-1):        
         self.priceBid = priceBid
         self.amountBid = amountBid
+        self.balanceID = balanceID
+        
+    def __str__(self):
+        return "PriceBid: " + str(self.priceBid) + ", AmountBid: " + str(self.amountBid) + ", BalanceID: " + str(self.balanceID)
+        
+class InfoMarket(object):
+    def __init__(self, priceAsk=0.0, priceBid=0.0, amountAsk=0.0, amountBid=0.0):
+        self.priceBid = priceBid
+        self.priceAsk = priceAsk
+        self.amountBid = amountBid
+        self.amountAsk = amountAsk        
   
 class InfoBalance(object):
     def __init__(self):
