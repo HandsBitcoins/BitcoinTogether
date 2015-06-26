@@ -156,9 +156,11 @@ class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
     
 # import DummyAPI
 # duAP = DummyAPI.DummyAPI()
+# cloIn = ClosimInnerTrader(duAP)
+## cloIn.createOrderTable()
 #     
 # iS = ClosimCommonMessageObjects.InfoSell(270000, 1.2)
-# cloIn = ClosimInnerTrader(duAP)
+
 # 
 # res = cloIn.sell(iS)
 # for eares in res:

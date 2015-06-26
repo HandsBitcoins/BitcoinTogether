@@ -10,8 +10,6 @@ class ClosimOuterTrader(ClosimBalanceManager.ClosimBalanceManager):
         
         ClosimBalanceManager.ClosimBalanceManager.__init__(self,API)
         
-        
-    
     def processOrderQuery(self,listOrder):
         pass
         
@@ -19,6 +17,19 @@ class ClosimOuterTrader(ClosimBalanceManager.ClosimBalanceManager):
         infoNowOrder = self.API.getOrderInfo()
         
         if len(self.orders) != len(infoNowOrder):
-            
+            pass
+        
+    def updateBalanceDB(self):
+        self.API.getFillOrder()
+        
+        
+        
+        
+        
+        
+    
+        
+        
+        
             
         

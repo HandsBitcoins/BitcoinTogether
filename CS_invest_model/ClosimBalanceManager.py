@@ -31,9 +31,11 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         self.cursor = self.connDB.cursor()
         
         self.namePriceTable = "BITCOIN_BALANCE"
+        self.nameOrderTable = "ORDER_LIST"
         
         if not existDB:
             self.createPriceTable(self.namePriceTable)
+            self.createOrderTable(self.nameOrderTable)
         
     def disconnectDatabase(self):
         self.connDB.commit()
@@ -48,7 +50,8 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         self.clearQuery()
         
     def createOrderTable(self,nameTable="ORDER_LIST"):
-        self.cursor.execute("CREATE TABLE " + nameTable + "(orderID INTEGER PRIMARY KEY, )")
+        self.cursor.execute("CREATE TABLE " + nameTable + "(orderID INTEGER PRIMARY KEY, balanceID INTEGER, amount float, state TEXT)")
+        self.clearQuery()
 
     def registerBalanceByInfoBalance(self,infoBalanceBuy):
         #INSERT INTO TABLE_NAME (column1, column2, column3,...columnN) VALUES (value1, value2, value3,...valueN);        
@@ -125,7 +128,13 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         infoBalance = ClosimCommonMessageObjects.InfoBalance()
         infoBalance.initByList(listData)
         
-        return infoBalance    
+        return infoBalance
+    
+    def getNotComletedOrders(self):
+        self.cursor.execute("SELECT * FROM " + self.nameOrderTable + " WHERE state like 'READY'")
+        listFetchQuery = self.cursor.fetchall()        
+        
+        return listFetchQuery
 # import DummyAPI
 #         
 # dumAPI = DummyAPI.DummyAPI()

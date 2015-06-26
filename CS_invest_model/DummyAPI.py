@@ -36,6 +36,9 @@ class DummyAPI(object):
     def cancelAllOrder(self):
         self.orders = []
         
+    def getFillOrder(self):
+        return []
+        
 
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown
