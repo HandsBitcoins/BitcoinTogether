@@ -1,12 +1,10 @@
 import DummyAPI
 import ClosimStatistician
-import ClosimBalanceManager
 import ClosimInnerTrader
 
 dumAPI = DummyAPI.DummyAPI()
 cloStat = ClosimStatistician.ClosimStatistician(dumAPI)
-cloBal = ClosimBalanceManager.ClosimBalanceManager(dumAPI)
-cloin = ClosimInnerTrader.ClosimInnerTrader(dumAPI,cloBal) 
+cloin = ClosimInnerTrader.ClosimInnerTrader(dumAPI)
 
 for _ in range(100):
     infos = cloStat.getInfoForInnerTrader()
@@ -19,7 +17,8 @@ for _ in range(100):
     listQuery = cloin.actInnerTrader(infos)
     if len(listQuery)>0:
         print infos[0]
-        print listQuery
+        for eachQ in listQuery:            
+            print eachQ
         print ""
         
 #     if infos[0].isBuy:        

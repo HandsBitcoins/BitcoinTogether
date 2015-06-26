@@ -1,14 +1,11 @@
 import math
 import random
-import sqlite3
 
-import scipy.stats
-
-import ClosimCalculator
 import ClosimCommonMessageObjects
+import ClosimBalanceManager
 
-class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
-    def __init__(self,API,balanceManager):
+class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
+    def __init__(self,API):
         self.isPrevBuy = True
         self.prevPriceCrest = 0.0
         self.prevPriceTrough = 0.0
@@ -17,18 +14,7 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
         self.dictMenu = {"buy": 0, 
                          "sell": 1}
         
-        self.dictBuyQuery = {"Menu": 0, 
-                             "Amount": 1,
-                             "PriceNow": 2,
-                             "Expected": 3}
-        
-        self.dictSellQuery = {"Menu": 0, 
-                              "Amount": 1,
-                              "Price": 2,
-                              "ID": 3}
-                
-        ClosimCalculator.ClosimCalculator.__init__(self,API)
-        self.balanceManager = balanceManager
+        ClosimBalanceManager.ClosimBalanceManager.__init__(self,API)
 
     def actInnerTrader(self,infos):
         listQuery = []
@@ -36,9 +22,26 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
         listQuery += self.buy(infos[0])
         listQuery += self.sell(infos[1])
         
-        self.fuseQuery(listQuery)
+        self.fuseQuery(listQuery)        
+        #listQuery = self.getInfoObjects(listQuery)
         
         return listQuery
+
+    def getInfoObjects(self,listQuery):
+        listInfoObjects = []
+        
+        for eachQuery in listQuery:
+            if eachQuery[0] == 0:
+                #(self, priceBuy, priceExpected, amountBuy):
+                buyInfoObject = ClosimCommonMessageObjects.InfoBuy(eachQuery[self.dictBuyQuery["PriceNow"]],eachQuery[self.dictBuyQuery["Expected"]],eachQuery[self.dictBuyQuery["Amount"]])
+                listInfoObjects.append(buyInfoObject)
+                                
+            else:
+                #(self, price, amount, balanceID=-1):
+                sellInfoObject = ClosimCommonMessageObjects.InfoSell(eachQuery[self.dictSellQuery["Price"]],eachQuery[self.dictSellQuery["Amount"]],eachQuery[self.dictSellQuery["ID"]])
+                listInfoObjects.append(sellInfoObject)
+                
+        return listInfoObjects
 
 #   wave crest and trough
     def buy(self,infoBuy):
@@ -78,7 +81,9 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
                 
                 #return buy query
                 #Sell, amount, price
-                query = [self.dictMenu["buy"],amtBuy,infoBuy.priceNow,priceExpectedRising]
+#                 class InfoBuy(object):
+#                     def __init__(self, priceBuy, priceExpected, amountBuy):
+                query = ClosimCommonMessageObjects.InfoBuy(infoBuy.priceNow,priceExpectedRising,amtBuy)
                 listBuyQuery.append(query)
             
             self.isPrevBuy = priceExpectedProfit < infoBuy.priceNow+feeExpected
@@ -88,82 +93,86 @@ class ClosimInnerTrader(ClosimCalculator.ClosimCalculator):
     def sell(self,infoSell):
         listSellQuery = []
            
-        listFetchQuery = self.balanceManager.searchBalanceToSell(infoSell.priceBid)
-        listFetchQuery.sort(key=lambda listFetchQuery: listFetchQuery[self.balanceManager.dictBalanceDBIndex["nextSellPrice"]])
+        listFetchQuery = self.searchBalanceToSell(infoSell.price)
+        listFetchQuery.sort(key=lambda listFetchQuery: listFetchQuery[self.dictBalanceDBIndex["nextSellPrice"]])
         
         amtTotalSell = 0.0
         
         #sum sell amount until amountNowBid
         for eachFetchQuery in listFetchQuery:
-            processQuery = [self.dictMenu["sell"]]
-            processQuery.append(eachFetchQuery[self.balanceManager.dictBalanceDBIndex["nextSellAmount"]])
-            processQuery.append(eachFetchQuery[self.balanceManager.dictBalanceDBIndex["nextSellPrice"]])
-            processQuery.append(eachFetchQuery[self.balanceManager.dictBalanceDBIndex["balanceID"]])
+            eachInfoSell = self.convertFetchQueryToInfoSell(eachFetchQuery)            
+            amtTotalSell += eachInfoSell.amount
             
-            amtTotalSell += processQuery[self.dictSellQuery["Amount"]]
-            
-            if amtTotalSell > infoSell.amountBid:
-                break
+            if amtTotalSell > infoSell.amount:
+                eachInfoSell.amount -= amtTotalSell - infoSell.amount
+                listSellQuery.append(eachInfoSell)                
+                break            
             else: 
-                listSellQuery.append(processQuery)
+                listSellQuery.append(eachInfoSell)
                 
         return listSellQuery
+    
+    def convertFetchQueryToInfoSell(self,fetchQuery):
+#         class InfoSell(object):
+#             def __init__(self, price, amount, balanceID=-1):
+        return ClosimCommonMessageObjects.InfoSell(fetchQuery[self.dictBalanceDBIndex["nextSellPrice"]],fetchQuery[self.dictBalanceDBIndex["nextSellAmount"]],fetchQuery[self.dictBalanceDBIndex["balanceID"]])
         
     def fuseQuery(self,listQuery):
         if len(listQuery) < 2:
             return listQuery
-            
-        if listQuery[0][self.dictBuyQuery["Menu"]] == self.dictMenu["buy"]:
-            
-            for eachQ in listQuery:
-                print eachQ
-            
-            amtBuyTransSell = listQuery[0][self.dictBuyQuery["Amount"]]
+                        
+        if listQuery[0].menu:                        
+            amtBuyTransSell = listQuery[0].amount
             isBuyProcessed = False
             
             newListQuery = []
             for eachQuery in listQuery[1:]:
-                if amtBuyTransSell > eachQuery[self.dictSellQuery["Amount"]]:
-                    amtBuyTransSell -= eachQuery[1]
-                    eachQuery[1] = 0.0
-                    self.balanceManager.proceedBalance(eachQuery[self.dictSellQuery["ID"]])
+                if amtBuyTransSell > eachQuery.amount:
+                    amtBuyTransSell -= eachQuery.amount
+                    eachQuery.amount = 0.0
+                    self.proceedBalance(eachQuery.balanceID)
                 else:
-                    eachQuery[1] -= amtBuyTransSell
+                    eachQuery.amount -= amtBuyTransSell
                     amtBuyTransSell = 0.0
-                    self.balanceManager.updateBalanceSellAmt(eachQuery[self.dictSellQuery["Amount"]],eachQuery[self.dictSellQuery["ID"]])
+                    self.updateBalanceSellAmt(eachQuery.amount,eachQuery.balanceID)
                     isBuyProcessed = True
                     break
             
-            listQuery[0][self.dictBuyQuery["Amount"]] -= amtBuyTransSell
+            listQuery[0].amount -= amtBuyTransSell
             infoNewBalance = self.generateInfoBalanceByQuery(listQuery[0])
-            self.balanceManager.registerBalanceByInfoBalance(infoNewBalance)
+            self.registerBalanceByInfoBalance(infoNewBalance)
             
             if not isBuyProcessed:
-                listQuery[0][self.dictBuyQuery["Amount"]] = amtBuyTransSell
+                listQuery[0].amount = amtBuyTransSell
                 newListQuery.append(listQuery[0])
             else:
                 for eachQuery in listQuery[1:]:
-                    if eachQuery[1] != 0.0:
+                    if eachQuery.amount != 0.0:
                         newListQuery.append(eachQuery)
 
             return newListQuery
         
         return listQuery
     
-    def generateInfoBalanceByQuery(self,queryOrder):
-        #amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice        
-        listData = []
-        listData.append(queryOrder[self.dictBuyQuery["Amount"]])        #listData[0]
-        listData.append(queryOrder[self.dictBuyQuery["PriceNow"]])      #listData[1]
-        listData.append(queryOrder[self.dictBuyQuery["PriceExpected"]]) #listData[2]
-        listData.append(0)
-        listData.append(self.calRateSell(0)*listData[0])
-        listData.append(self.calPriceSell(listData[2], listData[1], 0))
-        
-        infoBalance = ClosimCommonMessageObjects.InfoBalance()
-        infoBalance.initByList(listData)
-        
-        return infoBalance        
-    
+# import DummyAPI
+# duAP = DummyAPI.DummyAPI()
+#     
+# iS = ClosimCommonMessageObjects.InfoSell(270000, 1.2)
+# cloIn = ClosimInnerTrader(duAP)
+# 
+# res = cloIn.sell(iS)
+# for eares in res:
+#     print eares
+#     
+# iB = ClosimCommonMessageObjects.InfoBuy(270100,275000,1.5)
+# 
+# listQ = [iB]
+# listQ += res
+# 
+# res2 = cloIn.fuseQuery(listQ)
+# for eares in res2:
+#     print eares
+
+
     
 

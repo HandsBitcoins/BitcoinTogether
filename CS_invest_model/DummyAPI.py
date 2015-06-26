@@ -11,6 +11,8 @@ class DummyAPI(object):
         self.nowPriceAsk = 260000.0
         self.nowPriceBid = 250000.0
         
+        self.orders = []
+        
     def getCashBalance(self):
         return self.cashBalance
 
@@ -27,6 +29,13 @@ class DummyAPI(object):
         infoMarket = ClosimCommonMessageObjects.InfoMarket(self.nowPriceAsk, self.nowPriceBid, valAskAmount, valBidAmount)
         
         return infoMarket
+    
+    def getOrderInfo(self):
+        pass
+    
+    def cancelAllOrder(self):
+        self.orders = []
+        
 
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown

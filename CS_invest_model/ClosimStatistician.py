@@ -21,7 +21,7 @@ class ClosimStatistician(object):
         self.priceTrough = 0.0
         self.priceNow = 0.0
         
-        self.nameTable = ""
+        self.namePriceTable = ""
         
         self.API = API
     
@@ -38,10 +38,10 @@ class ClosimStatistician(object):
     
     def createPriceTable(self,nameTable):        
         self.cursor.execute("CREATE TABLE " + nameTable + "(priceFall float, priceRise float)") 
-        self.nameTable = nameTable
+        self.namePriceTable = nameTable
         
     def insertRiseFall(self,dataSet):
-        self.cursor.execute("INSERT INTO " + self.nameTable + " VALUES(" + str(dataSet[0]) +", "+ str(dataSet[1]) +")") 
+        self.cursor.execute("INSERT INTO " + self.namePriceTable + " VALUES(" + str(dataSet[0]) +", "+ str(dataSet[1]) +")") 
         
     def clearQuery(self):
         self.connDB.commit()
@@ -91,14 +91,14 @@ class ClosimStatistician(object):
         return self.getInfoBuy(amtAsk)
                 
     def selectAllTable(self):
-        self.cursor.execute("SELECT * FROM " + self.nameTable)
+        self.cursor.execute("SELECT * FROM " + self.namePriceTable)
         dataAll = self.cursor.fetchall()
         
         for eachData in dataAll:
             print eachData[0], eachData[1]
             
     def getInfoBuy(self,amtAsk):
-        infoBuy = ClosimCommonMessageObjects.InfoBuy(self.isBuy, self.priceCrest, self.priceTrough, self.priceNow, amtAsk)        
+        infoBuy = ClosimCommonMessageObjects.InfoMarketWave(self.isBuy, self.priceCrest, self.priceTrough, self.priceNow, amtAsk)        
         return infoBuy
                
     def getInfoSell(self,infoMarket):
