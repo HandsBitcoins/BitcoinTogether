@@ -21,7 +21,7 @@ class ClosimStatistician(object):
         self.priceTrough = 0.0
         self.priceNow = 0.0
         
-        self.namePriceTable = ""
+        self.nameTable = ""
         
         self.API = API
     
@@ -38,10 +38,10 @@ class ClosimStatistician(object):
     
     def createPriceTable(self,nameTable):        
         self.cursor.execute("CREATE TABLE " + nameTable + "(priceFall float, priceRise float)") 
-        self.namePriceTable = nameTable
+        self.nameTable = nameTable
         
     def insertRiseFall(self,dataSet):
-        self.cursor.execute("INSERT INTO " + self.namePriceTable + " VALUES(" + str(dataSet[0]) +", "+ str(dataSet[1]) +")") 
+        self.cursor.execute("INSERT INTO " + self.nameTable + " VALUES(" + str(dataSet[0]) +", "+ str(dataSet[1]) +")") 
         
     def clearQuery(self):
         self.connDB.commit()
@@ -91,7 +91,7 @@ class ClosimStatistician(object):
         return self.getInfoBuy(amtAsk)
                 
     def selectAllTable(self):
-        self.cursor.execute("SELECT * FROM " + self.namePriceTable)
+        self.cursor.execute("SELECT * FROM " + self.nameTable)
         dataAll = self.cursor.fetchall()
         
         for eachData in dataAll:

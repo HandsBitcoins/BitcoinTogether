@@ -1,3 +1,4 @@
+import copy
 import sqlite3
 import operator
 
@@ -15,8 +16,10 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
                                    "priceExpected":   3,
                                    "nowSteps":        4,
                                    "nextSellAmount":  5,
-                                   "nextSellPrice":   6}
-        
+                                   "nextSellPrice":   6,
+                                   "state":           7,
+                                   "orderID":         8}
+
         ClosimCalculator.ClosimCalculator.__init__(self,API)
 
     def __del__(self):
@@ -30,12 +33,10 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         self.connDB = sqlite3.connect(self.nameDB)
         self.cursor = self.connDB.cursor()
         
-        self.namePriceTable = "BITCOIN_BALANCE"
-        self.nameOrderTable = "ORDER_LIST"
+        self.nameTable = "BITCOIN_BALANCE"
         
         if not existDB:
-            self.createPriceTable(self.namePriceTable)
-            self.createOrderTable(self.nameOrderTable)
+            self.createPriceTable(self.nameTable)
         
     def disconnectDatabase(self):
         self.connDB.commit()
@@ -46,102 +47,186 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         
     def createPriceTable(self,nameTable="BITCOIN_BALANCE"):
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
-        self.cursor.execute("CREATE TABLE " + nameTable + "(balanceID INTEGER PRIMARY KEY AUTOINCREMENT, amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float)")        
-        self.clearQuery()
-        
-    def createOrderTable(self,nameTable="ORDER_LIST"):
-        self.cursor.execute("CREATE TABLE " + nameTable + "(orderID INTEGER PRIMARY KEY, balanceID INTEGER, amount float, state TEXT)")
+        self.cursor.execute("CREATE TABLE " + nameTable + "(balanceID INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, amountBuy float, priceBuy float, priceExpected float, nowSteps int, nextSellAmount float, nextSellPrice float, state TEXT, orderID INTEGER)")
         self.clearQuery()
 
-    def registerBalanceByInfoBalance(self,infoBalanceBuy):
+    def registerBalanceByInfoBalance(self,infoBalanceBuy,isComplete=False):
+        tempInfoBalance = copy.deepcopy(infoBalanceBuy)
+        
         #INSERT INTO TABLE_NAME (column1, column2, column3,...columnN) VALUES (value1, value2, value3,...valueN);        
-        self.cursor.execute("INSERT INTO " + self.namePriceTable + "(amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice) VALUES ("  + str(infoBalanceBuy) + ")")
+        if isComplete:
+            tempInfoBalance.nowSteps = 0
+            tempInfoBalance.nextSellAmount = self.calRateSell(0)*infoBalanceBuy.amount
+            tempInfoBalance.nextSellPrice = self.calPriceSell(infoBalanceBuy.priceExpected, infoBalanceBuy.price, infoBalanceBuy.nowSteps)
+            tempInfoBalance.state = 'Complete'
+
+        self.cursor.execute("INSERT INTO " + self.nameTable + "(amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice, state) VALUES ("  + str(tempInfoBalance) + ")")            
         self.clearQuery() 
 
     def searchBalanceToSell(self,priceToSell):        
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
-        self.cursor.execute("SELECT * FROM " + self.namePriceTable + " WHERE nextSellPrice < " + str(priceToSell))
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE nextSellPrice < " + str(priceToSell) + " AND state LIKE 'Complete'")
         listFetchQuery = self.cursor.fetchall()
-        
-        #processing
-        #sort by price increase order
         listFetchQuery.sort(key=operator.itemgetter(self.dictBalanceDBIndex["nextSellPrice"]))
-        
-        return listFetchQuery        
+                
+        return self.convertListFetchToListInfoObjects(listFetchQuery)
     
     def getBalanceInfoByID(self,balanceID):       
-        self.cursor.execute("SELECT * FROM " + self.namePriceTable + " WHERE balanceID = " + str(balanceID))
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE balanceID = " + str(balanceID))
         listFetchQuery = self.cursor.fetchall()
         
         if len(listFetchQuery) != 1:
             print "Fail to load balance from ID."
             return False
         
-        return listFetchQuery[0]
+        infoBalance = self.generateOrderObjectFromFetchQuery(listFetchQuery[0])
+        
+        return infoBalance
         
     def proceedBalance(self,balanceID):
         infoQueriedBalance = self.getBalanceInfoByID(balanceID) 
-        
-        if infoQueriedBalance[self.dictBalanceDBIndex["nowSteps"]] != 4:
+                
+        if infoQueriedBalance.nowSteps != 4:            
             self.processBalanceNextStep(infoQueriedBalance)
-        else:
+            self.updateBalanceComplete(balanceID)
+        else:            
             self.destructBalance(balanceID)
             
-    def destructBalance(self,balaceID):
-        self.cursor.execute("DELETE FROM " + self.namePriceTable + " WHERE balanceID = " + str(balaceID))
+    def destructBalance(self,balanceID):
+        self.connDB.execute("DELETE FROM " + self.nameTable + " WHERE balanceID = " + str(balanceID))
         self.clearQuery()
         
-    def processBalanceNextStep(self,tupleQueried):        
-        
-        #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
-        balanceID = tupleQueried[self.dictBalanceDBIndex["balanceID"]]
-        nowSteps = tupleQueried[self.dictBalanceDBIndex["nowSteps"]]
-        priceExpected = tupleQueried[self.dictBalanceDBIndex["priceExpected"]]
-        priceBuy = tupleQueried[self.dictBalanceDBIndex["priceBuy"]]
-        amtBuy = tupleQueried[self.dictBalanceDBIndex["amountBuy"]]
-        
+    def processBalanceNextStep(self,tupleQueried):
 #         priceNext = priceBuy+(priceExpected-priceBuy)/5.0*(nowSteps+1.0)
-        priceNext = self.calPriceSell(priceExpected, priceBuy, nowSteps+1)
-        amtNext = amtBuy*self.getRateToSell(nowSteps+1)
+        priceNext = self.calPriceSell(tupleQueried.priceExpected, tupleQueried.price, tupleQueried.nowSteps+1)
+        amtNext = tupleQueried.amount*self.getRateToSell(tupleQueried.nowSteps+1)
 
-        self.cursor.execute("UPDATE " + self.namePriceTable + " SET nowSteps = " + str(nowSteps+1) +
-                            ", nextSellAmount = " + str(amtNext) + 
-                            ", nextSellPrice = " + str(priceNext) +
-                            " WHERE balanceID = " + str(balanceID))
-        
+        sqlQuery = "UPDATE " + self.nameTable + " SET nowSteps = " + str(tupleQueried.nowSteps+1)
+        sqlQuery += ", nextSellAmount = " + str(amtNext) + ", nextSellPrice = " + str(priceNext)
+        sqlQuery += " WHERE balanceID = " + str(tupleQueried.balanceID) 
+
+        self.connDB.execute(sqlQuery)
         self.clearQuery()
 
-    def updateBalanceSellAmt(self,balanceID,newAmount):        
-        self.cursor.execute("UPDATE " + self.namePriceTable + " SET nextSellAmount = " + str(newAmount) + " WHERE balanceID = " + str(balanceID))
+    def getNotComletedOrders(self):
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE state NOT LIKE 'Complete'")
+        listFetchQuery = self.cursor.fetchall()
+        
+        return self.convertListFetchToListInfoObjects(listFetchQuery)
+    
+    def getProcessBalanceInfo(self):
+        self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE state LIKE 'Process'")
+        listFetchQuery = self.cursor.fetchall()
+        
+        return self.convertListFetchToListInfoObjects(listFetchQuery)
+    
+    def convertListFetchToListInfoObjects(self,listFetchQuery):        
+        newList = []
+        for eachQuery in listFetchQuery:
+            newList.append(self.generateOrderObjectFromFetchQuery(eachQuery))
+            
+        return newList
+
+    def processBuyBalance(self,balanceID,newAmount):        
+        if newAmount == 0.0:            
+            self.destructBalance(balanceID)
+        else:
+            self.updateBalanceBuyAmt(balanceID, newAmount)
+            
+    def updateBalanceBuyAmt(self,balanceID,newAmount):        
+        self.connDB.execute("UPDATE " + self.nameTable + " SET amountBuy = " + str(newAmount) + " WHERE balanceID = " + str(balanceID))
+        self.clearQuery()        
+
+    def updateBalanceSellAmt(self,balanceID,selledAmount):
+        print "update newamt"
+        infoQueriedBalance = self.getBalanceInfoByID(balanceID)        
+        newAmount = infoQueriedBalance.nextSellAmount - selledAmount
+        
+        self.connDB.execute("UPDATE " + self.nameTable + " SET nextSellAmount = " + str(newAmount) + " WHERE balanceID = " + str(balanceID))
         self.clearQuery()
         
+    def updateBalanceComplete(self,balanceID):
+        self.connDB.execute("UPDATE " + self.nameTable + " SET state = 'Complete' WHERE balanceID = " + str(balanceID))
+        self.clearQuery()
+        return False
+        
+    def updateBalanceStart(self,infoBalance,amountBuy):
+        self.updateBalanceBuyAmt(infoBalance.balanceID, amountBuy)
+        self.processBalanceNextStep(infoBalance)
+        self.updateBalanceComplete(infoBalance.balanceID)
+        
+        return False
+    
+    def updateStateOrdered(self,infoOrder,balanceID):
+        newState = ''
+        if infoOrder.isBuy:
+            newState = 'Buy'
+        else:
+            newState = 'Sell'
+            
+        self.connDB.execute("UPDATE " + self.nameTable + " SET state = " + newState + " WHERE balanceID = " + str(balanceID))
+        self.connDB.execute("UPDATE " + self.nameTable + " SET orderID = " + str(infoOrder.orderID) + " WHERE balanceID = " + str(balanceID))
+        self.clearQuery()
+            
+        return False
+ 
+    def generateInfoBalanceByVariables(self,amount,price,priceExpected):
+        listData = []
+        listData.append(amount)          #listData[0]
+        listData.append(price)           #listData[1]
+        listData.append(priceExpected)   #listData[2]
+        listData.append(-1)
+        listData.append(amount)
+#         listData.append(self.calRateSell(0)*listData[0])
+        listData.append(self.calPriceSell(priceExpected, price, 0))
+        
+        infoBalance = ClosimCommonMessageObjects.InfoBalance()
+        infoBalance.initByList(listData)
+        
+        return infoBalance
+ 
     def generateInfoBalanceByQuery(self,queryOrder):
         #amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice        
         listData = []
         listData.append(queryOrder.amount)          #listData[0]
         listData.append(queryOrder.price)           #listData[1]
         listData.append(queryOrder.priceExpected)   #listData[2]
-        listData.append(0)
-        listData.append(self.calRateSell(0)*listData[0])
-        listData.append(self.calPriceSell(listData[2], listData[1], 0))
+        listData.append(-1)
+        listData.append(queryOrder.amount)
+#         listData.append(self.calRateSell(0)*listData[0])
+        listData.append(self.calPriceSell(queryOrder.priceExpected, queryOrder.price, 0))
         
         infoBalance = ClosimCommonMessageObjects.InfoBalance()
         infoBalance.initByList(listData)
         
         return infoBalance
     
-    def getNotComletedOrders(self):
-        self.cursor.execute("SELECT * FROM " + self.nameOrderTable + " WHERE state like 'READY'")
-        listFetchQuery = self.cursor.fetchall()        
+    def generateOrderObjectFromFetchQuery(self,fetchQuery):
+        #amount, price, priceExpected, nowSteps, nextSellAmount, nextSellPrice, balanceID, state
+        listData = [fetchQuery[self.dictBalanceDBIndex["amountBuy"]]]
+        listData.append(fetchQuery[self.dictBalanceDBIndex["priceBuy"]])
+        listData.append(fetchQuery[self.dictBalanceDBIndex["priceExpected"]])        
+        listData.append(fetchQuery[self.dictBalanceDBIndex["nowSteps"]])        
+        listData.append(fetchQuery[self.dictBalanceDBIndex["nextSellAmount"]])
+        listData.append(fetchQuery[self.dictBalanceDBIndex["nextSellPrice"]])
         
-        return listFetchQuery
+        listData.append(fetchQuery[self.dictBalanceDBIndex["balanceID"]])
+        listData.append(fetchQuery[self.dictBalanceDBIndex["state"]])
+        listData.append(fetchQuery[self.dictBalanceDBIndex["orderID"]])
+           
+        infoOrder = ClosimCommonMessageObjects.InfoBalance()
+        infoOrder.initByList(listData)
+        
+        return infoOrder
+            
 # import DummyAPI
-#         
+#           
 # dumAPI = DummyAPI.DummyAPI()
 # clobalman = ClosimBalanceManager(dumAPI)
-# 
-# listQuery = clobalman.searchBalanceToSell(265000)
-# print listQuery
+#   
+# listQuery = clobalman.searchBalanceToSell(268000)
+# for eQ in listQuery:
+#     eQ.printBalanceInfo()
 # 
 # clobalman.proceedBalance(3)
 

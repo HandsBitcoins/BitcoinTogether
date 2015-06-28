@@ -2,9 +2,9 @@ import math
 
 class ClosimCalculator(object):
     def __init__(self,API):
+        self.API = API
         self.rateFee = API.rateFee
-        self.unitCurrency = API.unitCurrency
-        self.cashBalances = API.getCashBalance()
+        self.unitCurrency = API.unitCurrency        
                 
     def calPriceExpected(self,priceCrest,priceTrough):
         valAmplitude = abs(priceCrest-priceTrough)
@@ -17,8 +17,7 @@ class ClosimCalculator(object):
         return self.calPriceQuantized(priceExpected)
         
     def getExpectationRatio(self,valAmplitude):
-        return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746
-        
+        return 103.79133081279231**(-valAmplitude/8559.704161857346)+0.26960604565535746        
         
     def calFeeCost(self,priceExpectedRising,priceNow):
         priceTotal =  self.calPriceExpectedProfit(priceExpectedRising,priceNow)

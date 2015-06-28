@@ -33,11 +33,19 @@ class DummyAPI(object):
     def getOrderInfo(self):
         pass
     
-    def cancelAllOrder(self):
+    def cancelAllOrder(self,listNotComplete):
         self.orders = []
         
-    def getFillOrder(self):
+    def getFillOrder(self,orderID):
+        
+        
+        
         return []
+    
+    def registerOrder(self,orderQuery):
+        
+        return True 
+        
         
 
 def calInverseDownRateByRatio(ratioDown):

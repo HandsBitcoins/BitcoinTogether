@@ -13,12 +13,12 @@ for _ in range(100):
 #         print infos[0]
 #         print infos[1]
 #         print ""
-        
+    
     listQuery = cloin.actInnerTrader(infos)
     if len(listQuery)>0:
         print infos[0]
-        for eachQ in listQuery:            
-            print eachQ
+        for eachQ in listQuery:
+            eachQ.printBalanceInfo()
         print ""
         
 #     if infos[0].isBuy:        
