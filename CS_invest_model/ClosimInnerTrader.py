@@ -80,7 +80,7 @@ class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
         
         #sum sell amount until amountNowBid
         for eachInfoBalance in listInfoBalance:            
-            eachInfoBalance.price = infoSell.price 
+            eachInfoBalance.nextSellPrice = infoSell.price 
             amtTotalSell += eachInfoBalance.nextSellAmount
             
             if amtTotalSell > infoSell.amount:

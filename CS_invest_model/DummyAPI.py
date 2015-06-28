@@ -1,4 +1,5 @@
 import random
+import copy
 
 import ClosimCommonMessageObjects
 
@@ -6,12 +7,37 @@ class DummyAPI(object):
     def __init__(self):
         self.rateFee = 0.001
         self.unitCurrency = 500.0
-        self.cashBalance = 10000000.0
+        self.cashBalance = 10000000
         
         self.nowPriceAsk = 260000.0
         self.nowPriceBid = 250000.0
         
-        self.orders = []
+        self.fillOrders = []
+        
+        self.orderFile = 'orderID.txt'
+        self.orderID = self.getOrderID()
+        
+        self.cashFile = 'cash.txt'
+          
+    def __del__(self):
+        pass
+    
+    def loadCashBalance(self):
+        fp = open(self.cashFile)
+        temp = int(fp.readline())
+        fp.close()
+        return temp
+    
+    def saveCashBalance(self):
+        fp = open(self.cashFile,'w')
+        fp.write(str(self.cashBalance))
+        fp.close()
+        
+    def getOrderID(self):
+        fp = open(self.orderFile)
+        temp = int(fp.readline())
+        fp.close()
+        return temp
         
     def getCashBalance(self):
         return self.cashBalance
@@ -29,24 +55,63 @@ class DummyAPI(object):
         infoMarket = ClosimCommonMessageObjects.InfoMarket(self.nowPriceAsk, self.nowPriceBid, valAskAmount, valBidAmount)
         
         return infoMarket
-    
-    def getOrderInfo(self):
-        pass
-    
+
     def cancelAllOrder(self,listNotComplete):
-        self.orders = []
+        pass
         
-    def getFillOrder(self,orderID):
+    def getFillOrder(self,orderID):        
+#         fred = filter(lambda person: person.name == 'Fred', peeps)[0]
+#         for e in self.fillOrders:
+#             print e
+
+        searchItems = filter(lambda fill: fill.orderID == orderID, self.fillOrders)
+        if len(searchItems) > 0:
+            searchItem = copy.deepcopy(searchItems[0])
+        else:
+            searchItem = ClosimCommonMessageObjects.InfoFill()
+            
+        self.fillOrders = [item for item in self.fillOrders if item.orderID == orderID]
         
-        
-        
-        return []
+        return searchItem
     
     def registerOrder(self,orderQuery):
+        infoOrder = ClosimCommonMessageObjects.InfoOrder()
+        infoOrder.success = True        
+        infoOrder.isBuy = orderQuery.state == 'Process'
+        infoOrder.orderID = self.orderID
+        self.orderID += 1
+        fp = open(self.orderFile,'w')
+        fp.write(str(self.orderID))
         
-        return True 
+        self.processOrder(orderQuery, infoOrder)
         
+        return infoOrder 
+    
+    def processOrder(self,orderQuery,infoOrder):
+        menu = random.randint(0,2)
+        infoFill = ClosimCommonMessageObjects.InfoFill()
+        infoFill.orderID = infoOrder.orderID
         
+        if menu == 0:
+            #full trade
+            infoFill.amount = orderQuery.nextSellAmount                        
+        elif menu == 1:
+            #partially trade
+            infoFill.amount = random.uniform(0,orderQuery.nextSellAmount)
+        else:
+            #not trade
+            infoFill.amount = 0
+
+        if orderQuery.state == 'Process':
+            self.cashBalance -= int(infoFill.amount*orderQuery.nextSellPrice)            
+        else:
+            self.cashBalance += int(infoFill.amount*orderQuery.nextSellPrice)            
+        self.saveCashBalance()
+        self.fillOrders.append(infoFill)
+#         print len(self.fillOrders)
+        return False
+        
+duAP = DummyAPI()        
 
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown

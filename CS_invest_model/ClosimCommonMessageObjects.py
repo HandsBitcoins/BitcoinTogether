@@ -29,6 +29,20 @@ class InfoSell(object):
 #     def __str__(self):
 #         return  "PriceBuy: " + str(self.price) + ", PriceExpected: " + str(self.priceExpected) + ", AmountAsk: " + str(self.amount)  
         
+class InfoOrder(object):
+    def __init__(self):
+        self.isBuy = False
+        self.success = False
+        self.orderID = -1
+        
+class InfoFill(object):
+    def __init__(self):
+        self.amount = 0.0
+        self.orderID = -1
+        
+    def __str__(self):
+        return "OrderID: " + str(self.orderID) + ", Amount: " + str(self.amount)
+    
 class InfoMarket(object):
     def __init__(self, priceAsk=0.0, priceBid=0.0, amountAsk=0.0, amountBid=0.0):
         self.priceBid = priceBid

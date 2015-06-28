@@ -51,6 +51,7 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         self.clearQuery()
 
     def registerBalanceByInfoBalance(self,infoBalanceBuy,isComplete=False):
+        self.clearQuery()
         tempInfoBalance = copy.deepcopy(infoBalanceBuy)
         
         #INSERT INTO TABLE_NAME (column1, column2, column3,...columnN) VALUES (value1, value2, value3,...valueN);        
@@ -61,9 +62,9 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
             tempInfoBalance.state = 'Complete'
 
         self.cursor.execute("INSERT INTO " + self.nameTable + "(amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice, state) VALUES ("  + str(tempInfoBalance) + ")")            
-        self.clearQuery() 
-
-    def searchBalanceToSell(self,priceToSell):        
+        
+    def searchBalanceToSell(self,priceToSell):
+        self.clearQuery()        
         #balanceID, amountBuy, priceBuy, priceExpected, nowSteps, nextSellAmount, nextSellPrice
         self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE nextSellPrice < " + str(priceToSell) + " AND state LIKE 'Complete'")
         listFetchQuery = self.cursor.fetchall()
@@ -71,7 +72,8 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
                 
         return self.convertListFetchToListInfoObjects(listFetchQuery)
     
-    def getBalanceInfoByID(self,balanceID):       
+    def getBalanceInfoByID(self,balanceID):
+        self.clearQuery()       
         self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE balanceID = " + str(balanceID))
         listFetchQuery = self.cursor.fetchall()
         
@@ -94,7 +96,6 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
             
     def destructBalance(self,balanceID):
         self.connDB.execute("DELETE FROM " + self.nameTable + " WHERE balanceID = " + str(balanceID))
-        self.clearQuery()
         
     def processBalanceNextStep(self,tupleQueried):
 #         priceNext = priceBuy+(priceExpected-priceBuy)/5.0*(nowSteps+1.0)
@@ -106,9 +107,9 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         sqlQuery += " WHERE balanceID = " + str(tupleQueried.balanceID) 
 
         self.connDB.execute(sqlQuery)
-        self.clearQuery()
-
+        
     def getNotComletedOrders(self):
+        self.clearQuery()
         self.cursor.execute("SELECT * FROM " + self.nameTable + " WHERE state NOT LIKE 'Complete'")
         listFetchQuery = self.cursor.fetchall()
         
@@ -135,19 +136,15 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
             
     def updateBalanceBuyAmt(self,balanceID,newAmount):        
         self.connDB.execute("UPDATE " + self.nameTable + " SET amountBuy = " + str(newAmount) + " WHERE balanceID = " + str(balanceID))
-        self.clearQuery()        
 
     def updateBalanceSellAmt(self,balanceID,selledAmount):
-        print "update newamt"
         infoQueriedBalance = self.getBalanceInfoByID(balanceID)        
         newAmount = infoQueriedBalance.nextSellAmount - selledAmount
         
         self.connDB.execute("UPDATE " + self.nameTable + " SET nextSellAmount = " + str(newAmount) + " WHERE balanceID = " + str(balanceID))
-        self.clearQuery()
         
     def updateBalanceComplete(self,balanceID):
         self.connDB.execute("UPDATE " + self.nameTable + " SET state = 'Complete' WHERE balanceID = " + str(balanceID))
-        self.clearQuery()
         return False
         
     def updateBalanceStart(self,infoBalance,amountBuy):
@@ -164,11 +161,22 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         else:
             newState = 'Sell'
             
-        self.connDB.execute("UPDATE " + self.nameTable + " SET state = " + newState + " WHERE balanceID = " + str(balanceID))
+        self.connDB.execute("UPDATE " + self.nameTable + " SET state = '" + newState + "' WHERE balanceID = " + str(balanceID))
         self.connDB.execute("UPDATE " + self.nameTable + " SET orderID = " + str(infoOrder.orderID) + " WHERE balanceID = " + str(balanceID))
-        self.clearQuery()
             
         return False
+    
+    def getSumOfTotalCoins(self):
+        self.clearQuery()
+#         SELECT column_name,column_name FROM table_name;
+        self.cursor.execute("SELECT amountBuy, nowSteps FROM " + self.nameTable + " WHERE state LIKE 'Complete'")
+        listFetchQuery = self.cursor.fetchall()
+        
+        listLeftAmount = []
+        for eachTuple in listFetchQuery:
+            listLeftAmount.append(self.getLeftAmount(eachTuple[1],eachTuple[0]))
+        
+        return sum(listLeftAmount)
  
     def generateInfoBalanceByVariables(self,amount,price,priceExpected):
         listData = []
