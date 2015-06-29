@@ -39,6 +39,8 @@ class InfoFill(object):
     def __init__(self):
         self.amount = 0.0
         self.orderID = -1
+        self.isBuy = False
+        self.nextSellPrice = 0.0
         
     def __str__(self):
         return "OrderID: " + str(self.orderID) + ", Amount: " + str(self.amount)

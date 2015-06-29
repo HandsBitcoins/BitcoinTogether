@@ -61,12 +61,7 @@ class ClosimCalculator(object):
         
         return -1.0*((numStep**3.0)-6.0*(numStep**2.0)+5.0*numStep)/60.0+0.1
     
-    def getLeftAmount(self, numStep, amount):
-        listRate = []
-        for i in range(numStep,6):
-            listRate.append(self.getRateToSell(i))
-            
-        return amount*sum(listRate)
+
             
     
     

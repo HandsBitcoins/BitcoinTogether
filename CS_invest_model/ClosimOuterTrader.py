@@ -20,7 +20,8 @@ class ClosimOuterTrader(ClosimBalanceManager.ClosimBalanceManager):
             
             infoOrder = self.API.registerOrder(eachOrder)
             if infoOrder.success:
-                self.updateStateOrdered(infoOrder,eachOrder.balanceID)            
+                self.updateStateOrdered(infoOrder,eachOrder.balanceID)
+        self.clearQuery()            
         
     def cancelOrder(self):
         listNotComplete = self.getNotComletedOrders()
@@ -49,6 +50,7 @@ class ClosimOuterTrader(ClosimBalanceManager.ClosimBalanceManager):
                         self.updateBalanceStart(eachOrder, infoFill.amount)                    
                     else:
                         self.destructBalance(eachOrder.balanceID)
+        self.clearQuery()
                     
         return False
                     

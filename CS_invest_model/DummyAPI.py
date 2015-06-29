@@ -7,17 +7,19 @@ class DummyAPI(object):
     def __init__(self):
         self.rateFee = 0.001
         self.unitCurrency = 500.0
-        self.cashBalance = 10000000
+        
+        self.cashFile = 'cash.txt'
+        self.cashBalance = self.loadCashBalance()
         
         self.nowPriceAsk = 260000.0
-        self.nowPriceBid = 250000.0
+        self.nowPriceBid = 259500.0
         
         self.fillOrders = []
         
         self.orderFile = 'orderID.txt'
         self.orderID = self.getOrderID()
         
-        self.cashFile = 'cash.txt'
+        
           
     def __del__(self):
         pass
@@ -42,15 +44,13 @@ class DummyAPI(object):
     def getCashBalance(self):
         return self.cashBalance
 
-    def getMarketInfo(self):        
-        self.nowPriceAsk += int(random.normalvariate(0,8))*self.unitCurrency
-        self.nowPriceBid -= int(random.normalvariate(0,8))*self.unitCurrency
+    def getMarketInfo(self):
+        self.nowPriceBid += int(random.normalvariate(0,2))*self.unitCurrency        
         
-        if self.nowPriceAsk < self.nowPriceBid:
-            self.nowPriceAsk = self.nowPriceBid + 10000.0
+        self.nowPriceAsk = self.nowPriceBid + 500.0
         
-        valAskAmount = abs(random.normalvariate(0,2)+1)
-        valBidAmount = abs(random.normalvariate(0,2)+1)
+        valAskAmount = abs(random.normalvariate(0,3)+2.0)
+        valBidAmount = abs(random.normalvariate(0,3)+2.0)
         
         infoMarket = ClosimCommonMessageObjects.InfoMarket(self.nowPriceAsk, self.nowPriceBid, valAskAmount, valBidAmount)
         
@@ -59,7 +59,7 @@ class DummyAPI(object):
     def cancelAllOrder(self,listNotComplete):
         pass
         
-    def getFillOrder(self,orderID):        
+    def getFillOrder(self,orderID):
 #         fred = filter(lambda person: person.name == 'Fred', peeps)[0]
 #         for e in self.fillOrders:
 #             print e
@@ -69,8 +69,9 @@ class DummyAPI(object):
             searchItem = copy.deepcopy(searchItems[0])
         else:
             searchItem = ClosimCommonMessageObjects.InfoFill()
-            
-        self.fillOrders = [item for item in self.fillOrders if item.orderID == orderID]
+        
+        self.processCashBalance(searchItem)    
+        self.fillOrders = [item for item in self.fillOrders if item.orderID == orderID]        
         
         return searchItem
     
@@ -91,27 +92,35 @@ class DummyAPI(object):
         menu = random.randint(0,2)
         infoFill = ClosimCommonMessageObjects.InfoFill()
         infoFill.orderID = infoOrder.orderID
+        infoFill.isBuy = infoOrder.isBuy
+        infoFill.nextSellPrice = orderQuery.nextSellPrice
         
         if menu == 0:
             #full trade
-            infoFill.amount = orderQuery.nextSellAmount                        
+            infoFill.amount = orderQuery.nextSellAmount
         elif menu == 1:
             #partially trade
             infoFill.amount = random.uniform(0,orderQuery.nextSellAmount)
         else:
             #not trade
             infoFill.amount = 0
-
-        if orderQuery.state == 'Process':
-            self.cashBalance -= int(infoFill.amount*orderQuery.nextSellPrice)            
-        else:
-            self.cashBalance += int(infoFill.amount*orderQuery.nextSellPrice)            
-        self.saveCashBalance()
+        
         self.fillOrders.append(infoFill)
 #         print len(self.fillOrders)
         return False
+    
+    def processCashBalance(self,infoFill):
+        if infoFill.amount > 0:
+            cash = int(infoFill.amount*infoFill.nextSellPrice)
+            if infoFill.isBuy:
+#                 print "BUY : ", cash, infoFill.amount, orderQuery.balanceID, orderQuery.nowSteps
+                self.cashBalance -= cash+int(cash*self.rateFee)
+            else:
+#                 print "SELL: ", cash, infoFill.amount, orderQuery.balanceID, orderQuery.nowSteps
+                self.cashBalance += cash-int(cash*self.rateFee)
+            self.saveCashBalance()        
         
-duAP = DummyAPI()        
+duAP = DummyAPI()
 
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown

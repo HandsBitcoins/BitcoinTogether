@@ -7,6 +7,7 @@ import time
 import cProfile
 
 def test():
+    listTime = []
     dumAPI = DummyAPI.DummyAPI()
     cloStat = ClosimStatistician.ClosimStatistician(dumAPI)
     cloin = ClosimInnerTrader.ClosimInnerTrader(dumAPI)
@@ -14,7 +15,7 @@ def test():
     
     initBal = int(cloin.getSumOfTotalCoins()*dumAPI.nowPriceBid)+dumAPI.getCashBalance()
     
-    for i in range(5000):
+    for i in range(50000):
         timeStart = time.time()
         infos = cloStat.getInfoForInnerTrader()
             
@@ -34,9 +35,11 @@ def test():
         sumAmount = cloin.getSumOfTotalCoins()
         totalCash = int(sumAmount*infos[1].price) + dumAPI.getCashBalance()
         timeEnd = time.time()
-        print i, timeEnd-timeStart, totalCash, sumAmount, dumAPI.getCashBalance(), float(totalCash-initBal)/float(initBal)/100.0
-            
-    
+        print i, dumAPI.nowPriceAsk, dumAPI.nowPriceBid, timeEnd-timeStart, totalCash, sumAmount, dumAPI.getCashBalance(), float(totalCash-initBal)/float(initBal)*100.0
+        listTime.append(timeEnd-timeStart)
+
+    import numpy
+    print numpy.mean(listTime), numpy.std(listTime)
     #     if infos[0].isBuy:
     #         print ""
     
