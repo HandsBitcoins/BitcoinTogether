@@ -63,7 +63,9 @@ class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
                 
                 infoQuery = self.generateInfoBalanceByVariables(amtBuy,infoBuy.priceNow,priceExpectedRising)                
                 self.registerBalanceByInfoBalance(infoQuery)
-                infoRegistedBalance = self.getProcessBalanceInfo()                
+                infoRegistedBalance = self.getProcessBalanceInfo()
+                if len(infoRegistedBalance) < 1:
+                    return [] 
                 
                 listBuyQuery.append(infoRegistedBalance[-1])
             
@@ -74,7 +76,8 @@ class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
     def sell(self,infoSell):
         listSellQuery = []
            
-        listInfoBalance = self.searchBalanceToSell(infoSell.price)        
+        listInfoBalance = self.searchBalanceToSell(infoSell.price)
+        listInfoBalance += self.searchBalanceToSale(self.calPriceQuantized(infoSell.price*1.05))
         
         amtTotalSell = 0.0
         
@@ -102,17 +105,20 @@ class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
             
             newListQuery = []
             for eachQuery in listQuery[1:]:
+                #print amtBuyTransSell
+                #eachQuery.printBalanceInfo()
                 if amtBuyTransSell > eachQuery.nextSellAmount:
                     amtBuyTransSell -= eachQuery.nextSellAmount
-                    eachQuery.nextSellAmount = 0.0
-                    self.proceedBalance(eachQuery.balanceID)
+                    self.updateBalanceSellAmt(eachQuery.balanceID,eachQuery.nextSellAmount)
+                    eachQuery.nextSellAmount = 0.0                    
                 else:
                     eachQuery.nextSellAmount -= amtBuyTransSell                    
                     self.updateBalanceSellAmt(eachQuery.balanceID,amtBuyTransSell)
                     amtBuyTransSell = 0.0
                     isBuyProcessed = True
                     break
-            
+                
+            #print listQuery[0].nextSellAmount, amtBuyTransSell
             listQuery[0].amount -= amtBuyTransSell
             self.registerBalanceByInfoBalance(listQuery[0],isComplete=True)
                         
@@ -126,6 +132,8 @@ class ClosimInnerTrader(ClosimBalanceManager.ClosimBalanceManager):
                 for eachQuery in listQuery[1:]:
                     if eachQuery.nextSellAmount != 0.0:                        
                         newListQuery.append(eachQuery)
+            
+            #print self.getSumOfTotalCoins()
             
             return newListQuery
         

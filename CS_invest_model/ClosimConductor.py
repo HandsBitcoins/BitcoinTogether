@@ -13,29 +13,6 @@ def runStatistician():
 	
 	return listData	
 
-def getPriceStreamFromCSV(nameFile):
-	fileOpened = open(nameFile)
-	listRawAll = fileOpened.readlines()
-	fileOpened.close()
-	
-	listPrice = []
-	
-	for eachLine in listRawAll:
-		listLine = eachLine.split(',')
-		listPrice.append(float(listLine[1]))
-		
-	return listPrice
-	
-def testStreamProcessing(nameFile):
-	listStream = getPriceStreamFromCSV(nameFile)
-
-	stats.createPriceTable("testStream")
-	for eachData in listStream:
-		stats.proceedStep(eachData)
-	stats.clearQuery()
-	
-	stats.selectAllTable()
-
 import atexit
 
 @atexit.register

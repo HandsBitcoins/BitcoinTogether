@@ -38,17 +38,25 @@ class ClosimOuterTrader(ClosimBalanceManager.ClosimBalanceManager):
         
         for eachOrder in listNotComplete:
             infoFill = self.API.getFillOrder(eachOrder.orderID)
-            if infoFill.amount == eachOrder.nextSellAmount:                
+            
+            #eachOrder.printBalanceInfo()
+            #print infoFill
+            
+            if infoFill.amount == eachOrder.nextSellAmount:
+                #print "proceed normally"
                 self.proceedBalance(eachOrder.balanceID)            
-            elif isCanceled:
-                if eachOrder.state == 'Sell':
+            else:
+                if eachOrder.state == 'Sell':                    
                     self.updateBalanceComplete(eachOrder.balanceID)
                     if infoFill.amount > 0:
+                        #print "update next sell amt"
                         self.updateBalanceSellAmt(eachOrder.balanceID, infoFill.amount)                    
                 else:
-                    if infoFill.amount > 0:                    
+                    if infoFill.amount > 0:
+                        #print "less start"                    
                         self.updateBalanceStart(eachOrder, infoFill.amount)                    
                     else:
+#                         print "delete"
                         self.destructBalance(eachOrder.balanceID)
         self.clearQuery()
                     

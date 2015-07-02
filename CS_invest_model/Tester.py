@@ -7,15 +7,18 @@ import time
 import cProfile
 
 def test():
+    fp = open("inter.csv",'w')
+    fp.close()
     listTime = []
     dumAPI = DummyAPI.DummyAPI()
     cloStat = ClosimStatistician.ClosimStatistician(dumAPI)
     cloin = ClosimInnerTrader.ClosimInnerTrader(dumAPI)
     clOut = ClosimOuterTrader.ClosimOuterTrader(dumAPI)
     
-    initBal = int(cloin.getSumOfTotalCoins()*dumAPI.nowPriceBid)+dumAPI.getCashBalance()
+    initBal = int(cloin.getSumOfTotalCoins()*dumAPI.nowPriceBid)+dumAPI.getCashBalance()    
+    streamLength = dumAPI.getStreamLength()
     
-    for i in range(50000):
+    for i in range(streamLength):
         timeStart = time.time()
         infos = cloStat.getInfoForInnerTrader()
             
@@ -32,15 +35,31 @@ def test():
     #         print ""
             
         clOut.actOuter(listQuery)
-        sumAmount = cloin.getSumOfTotalCoins()
-        totalCash = int(sumAmount*infos[1].price) + dumAPI.getCashBalance()
+        sumAmount = dumAPI.bitBalance
+        totalCash = int(sumAmount*infos[1].price) + dumAPI.cashBalance
         timeEnd = time.time()
-        print i, dumAPI.nowPriceAsk, dumAPI.nowPriceBid, timeEnd-timeStart, totalCash, sumAmount, dumAPI.getCashBalance(), float(totalCash-initBal)/float(initBal)*100.0
+        percent = float(totalCash-initBal)/float(initBal)*100.0
+        print i, dumAPI.nowPriceAsk, dumAPI.nowPriceBid, timeEnd-timeStart, totalCash, cloin.getSumOfTotalCoins(), sumAmount, dumAPI.getCashBalance(), percent 
         listTime.append(timeEnd-timeStart)
+        newCompound = [str(i), str(dumAPI.nowPriceBid), str(totalCash), str(sumAmount), str(percent)]
+        fp = open("inter.csv",'a')
+        fp.write(','.join(newCompound)+'\n')
+        fp.close()
+        
+        if abs(cloin.getSumOfTotalCoins()-sumAmount) > 0.000000001 or dumAPI.cashBalance < 0:            
+            break
 
-    import numpy
-    print numpy.mean(listTime), numpy.std(listTime)
+    cntOverTime = 0
+    fp = open("time.csv",'w')
+    for eachT in listTime:
+        fp.write(str(eachT)+"\n")
+        if eachT > 1.0:
+            cntOverTime += 1
+    fp.close()
+    import numpy    
+    print streamLength, sum(listTime), numpy.mean(listTime), numpy.std(listTime), cntOverTime
     #     if infos[0].isBuy:
     #         print ""
+    
     
 test()

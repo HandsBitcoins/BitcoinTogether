@@ -5,11 +5,14 @@ import ClosimCommonMessageObjects
 
 class DummyAPI(object):
     def __init__(self):
-        self.rateFee = 0.001
-        self.unitCurrency = 500.0
+        self.rateFee = 0.000
+        self.unitCurrency = 100.0
         
         self.cashFile = 'cash.txt'
         self.cashBalance = self.loadCashBalance()
+        
+        self.bitFile = 'bit.txt'
+        self.bitBalance = self.loadBitBalance()
         
         self.nowPriceAsk = 260000.0
         self.nowPriceBid = 259500.0
@@ -19,7 +22,8 @@ class DummyAPI(object):
         self.orderFile = 'orderID.txt'
         self.orderID = self.getOrderID()
         
-        
+        self.stream = self.getPriceStreamFromCSV("./korbitKRW.csv")
+        self.indexStream = 0
           
     def __del__(self):
         pass
@@ -35,6 +39,17 @@ class DummyAPI(object):
         fp.write(str(self.cashBalance))
         fp.close()
         
+    def loadBitBalance(self):
+        fp = open(self.bitFile)
+        temp = float(fp.readline())
+        fp.close()
+        return temp
+    
+    def saveBitBalance(self):
+        fp = open(self.bitFile,'w')
+        fp.write(str(self.bitBalance))
+        fp.close()
+        
     def getOrderID(self):
         fp = open(self.orderFile)
         temp = int(fp.readline())
@@ -44,10 +59,15 @@ class DummyAPI(object):
     def getCashBalance(self):
         return self.cashBalance
 
-    def getMarketInfo(self):
-        self.nowPriceBid += int(random.normalvariate(0,2))*self.unitCurrency        
+    def getStreamLength(self):
+        return len(self.stream)
+
+    def getMarketInfo(self):        
+#         self.nowPriceBid += int(random.normalvariate(0,2))*self.unitCurrency
+        self.nowPriceBid = self.stream[self.indexStream]
+        self.indexStream += 1
         
-        self.nowPriceAsk = self.nowPriceBid + 500.0
+        self.nowPriceAsk = self.nowPriceBid + 100.0
         
         valAskAmount = abs(random.normalvariate(0,3)+2.0)
         valBidAmount = abs(random.normalvariate(0,3)+2.0)
@@ -64,14 +84,25 @@ class DummyAPI(object):
 #         for e in self.fillOrders:
 #             print e
 
-        searchItems = filter(lambda fill: fill.orderID == orderID, self.fillOrders)
-        if len(searchItems) > 0:
-            searchItem = copy.deepcopy(searchItems[0])
-        else:
-            searchItem = ClosimCommonMessageObjects.InfoFill()
+#         searchItems = filter(lambda fill: fill.orderID == orderID, self.fillOrders)
+#         if len(searchItems) > 0:
+#             searchItem = copy.deepcopy(searchItems[0])
+#         else:
+#             searchItem = ClosimCommonMessageObjects.InfoFill()
+#         
+#         
+#         self.fillOrders = [item for item in self.fillOrders if item.orderID == orderID]
+
+        searchItem = infoFill = ClosimCommonMessageObjects.InfoFill()
+        newList = []
+        for eachItem in self.fillOrders:
+            #print eachItem
+            if orderID != eachItem.orderID:
+                newList.append(eachItem)
+            else:
+                searchItem = eachItem
+        self.fillOrders = newList
         
-        self.processCashBalance(searchItem)    
-        self.fillOrders = [item for item in self.fillOrders if item.orderID == orderID]        
         
         return searchItem
     
@@ -94,8 +125,14 @@ class DummyAPI(object):
         infoFill.orderID = infoOrder.orderID
         infoFill.isBuy = infoOrder.isBuy
         infoFill.nextSellPrice = orderQuery.nextSellPrice
-        
-        if menu == 0:
+                
+        cash = int(orderQuery.nextSellAmount*orderQuery.nextSellPrice)
+#         print cash, orderQuery.nextSellAmount, orderQuery.nextSellPrice, self.cashBalance, infoOrder.isBuy
+        if cash+int(cash*self.rateFee) > self.cashBalance and infoOrder.isBuy:
+#             print "OVER CASH BALANCE!!!", cash, orderQuery.nextSellAmount, orderQuery.nextSellPrice, self.cashBalance
+            infoFill.amount = self.cashBalance/orderQuery.nextSellPrice
+#             print "REARRANGE", infoFill.amount, self.cashBalance, orderQuery.nextSellPrice 
+        elif menu == 0:
             #full trade
             infoFill.amount = orderQuery.nextSellAmount
         elif menu == 1:
@@ -105,22 +142,50 @@ class DummyAPI(object):
             #not trade
             infoFill.amount = 0
         
+        if orderQuery.state == 'Process':        
+            infoFill.amount = infoFill.amount*(1.0-self.rateFee)
+
         self.fillOrders.append(infoFill)
-#         print len(self.fillOrders)
+        self.processCashBalance(infoFill,orderQuery)
+
         return False
     
-    def processCashBalance(self,infoFill):
+    def processCashBalance(self,infoFill,orderQuery):
         if infoFill.amount > 0:
             cash = int(infoFill.amount*infoFill.nextSellPrice)
             if infoFill.isBuy:
-#                 print "BUY : ", cash, infoFill.amount, orderQuery.balanceID, orderQuery.nowSteps
-                self.cashBalance -= cash+int(cash*self.rateFee)
+                #print "BUY : ", cash, infoFill.amount, orderQuery.nextSellAmount, orderQuery.balanceID, orderQuery.nowSteps
+                self.cashBalance -= cash
+                self.bitBalance += infoFill.amount
             else:
-#                 print "SELL: ", cash, infoFill.amount, orderQuery.balanceID, orderQuery.nowSteps
+                #print "SELL: ", cash, infoFill.amount, orderQuery.nextSellAmount, orderQuery.balanceID, orderQuery.nowSteps
                 self.cashBalance += cash-int(cash*self.rateFee)
-            self.saveCashBalance()        
+                self.bitBalance -= infoFill.amount
+            self.saveCashBalance()
+            self.saveBitBalance()
+
+    def getPriceStreamFromCSV(self, nameFile):
+        fileOpened = open(nameFile)
+        listRawAll = fileOpened.readlines()
+        fileOpened.close()
         
-duAP = DummyAPI()
+        listPrice = []
+        
+        for eachLine in listRawAll:
+            listLine = eachLine.split(',')
+            listPrice.append(float(listLine[1]))
+            
+        return listPrice
+        
+def testStreamProcessing(nameFile):
+    listStream = getPriceStreamFromCSV(nameFile)
+
+    stats.createPriceTable("testStream")
+    for eachData in listStream:
+        stats.proceedStep(eachData)
+    stats.clearQuery()
+    
+    stats.selectAllTable()
 
 def calInverseDownRateByRatio(ratioDown):
     return (1-ratioDown)/ratioDown
