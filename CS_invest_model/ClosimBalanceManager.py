@@ -211,16 +211,33 @@ class ClosimBalanceManager(ClosimCalculator.ClosimCalculator):
         
         listLeftAmount = []
         for eachTuple in listFetchQuery:
-            listLeftAmount.append(self.getLeftAmount(eachTuple))
+            listLeftAmount.append(self.getLeftAmountByQueries(eachTuple))
         
         return sum(listLeftAmount)
     
-    def getLeftAmount(self, leftQuery):
+    def getAllOnceSellBalanceOver(self,priceNow):
+        pass
+        
+    def getAllOnceSellBalanceLess(self,priceNow):
+        priceSale = priceNow*1.05 
+        
+        
+        self.searchBalanceToSale(priceSale)
+        
+        
+    def getLeftAmountByQueries(self, leftQuery):
         listRate = []
         for i in range(leftQuery[1]+1,5):
             listRate.append(self.getRateToSell(i))
             
         return leftQuery[0]*sum(listRate)+leftQuery[2]
+    
+    def getLeftAmountByInfoBalance(self,infoBalance):
+        listRate = []
+        for i in range(infoBalance.nowSteps+1,5):
+            listRate.append(self.getRateToSell(i))
+            
+        return infoBalance.amount*sum(listRate)+infoBalance.nextSellAmount    
  
     def generateInfoBalanceByVariables(self,amount,price,priceExpected):
         listData = []

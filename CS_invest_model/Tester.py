@@ -6,8 +6,30 @@ import ClosimOuterTrader
 import time
 import cProfile
 
+import os
+
 def test():
-    fp = open("inter.csv",'w')
+    
+    os.remove("./balance.db")
+    fp = open("cash.txt",'w')
+    fp.write(str(3000000))
+    fp.close()
+    
+    fp = open("bit.txt",'w')
+    fp.write(str(0.0))
+    fp.close()
+    
+    successFind = True
+    indexFile = 0
+    while successFind:        
+        basicFileName = "inter" 
+        basicFileName += str(indexFile)
+        basicFileName += ".csv"
+        successFind = os.path.isfile(basicFileName)
+        if successFind:
+            indexFile += 1
+        
+    fp = open(basicFileName,'w')
     fp.close()
     listTime = []
     dumAPI = DummyAPI.DummyAPI()
@@ -41,8 +63,8 @@ def test():
         percent = float(totalCash-initBal)/float(initBal)*100.0
         print i, dumAPI.nowPriceAsk, dumAPI.nowPriceBid, timeEnd-timeStart, totalCash, cloin.getSumOfTotalCoins(), sumAmount, dumAPI.getCashBalance(), percent 
         listTime.append(timeEnd-timeStart)
-        newCompound = [str(i), str(dumAPI.nowPriceBid), str(totalCash), str(sumAmount), str(percent)]
-        fp = open("inter.csv",'a')
+        newCompound = [str(totalCash), str(sumAmount), str(percent)]
+        fp = open(basicFileName,'a')
         fp.write(','.join(newCompound)+'\n')
         fp.close()
         
@@ -50,7 +72,7 @@ def test():
             break
 
     cntOverTime = 0
-    fp = open("time.csv",'w')
+    fp = open("time"+str(indexFile)+".csv",'w')
     for eachT in listTime:
         fp.write(str(eachT)+"\n")
         if eachT > 1.0:
@@ -60,6 +82,8 @@ def test():
     print streamLength, sum(listTime), numpy.mean(listTime), numpy.std(listTime), cntOverTime
     #     if infos[0].isBuy:
     #         print ""
-    
-    
-test()
+
+import sys
+numRepeat = int(sys.argv[1])
+for _ in range(numRepeat):
+    test()
